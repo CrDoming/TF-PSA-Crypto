@@ -1,5 +1,6 @@
 set(drivers
     builtin
+    enterprise
     everest
     p256-m
     pqcp
@@ -11,6 +12,7 @@ set(drivers
 # provides these include paths.
 set(TF_PSA_CRYPTO_DRIVERS_INCLUDE_DIRS
         ${CMAKE_CURRENT_SOURCE_DIR}/builtin/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/enterprise/include
         ${CMAKE_CURRENT_SOURCE_DIR}/everest/include
         ${CMAKE_CURRENT_SOURCE_DIR}/p256-m
         ${CMAKE_CURRENT_SOURCE_DIR}/pqcp/include

@@ -4,3 +4,5 @@ add_custom_target(${programs_target})
 add_subdirectory(psa)
 add_subdirectory(test)
 add_subdirectory(fuzz)
+
+add_subdirectory(cli)

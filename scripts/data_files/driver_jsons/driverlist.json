@@ -2,5 +2,6 @@
     "p256_transparent_driver.json",
     "pqcp_driver.json",
     "mbedtls_test_transparent_driver.json",
-    "mbedtls_test_opaque_driver.json"
+    "mbedtls_test_opaque_driver.json",
+    "enterprise_transparent_driver.json"
 ]
