@@ -114,6 +114,7 @@ set(TF_PSA_CRYPTO_DRIVERS "${drivers}" PARENT_SCOPE)
 set(TF_PSA_CRYPTO_DRIVER_STATIC_TARGETS "${driver_static_targets}" PARENT_SCOPE)
 set(TF_PSA_CRYPTO_DRIVER_TARGETS "${driver_targets}" PARENT_SCOPE)
 
+add_subdirectory(enterprise)
 add_subdirectory(everest)
 add_subdirectory(p256-m)
 add_subdirectory(builtin)

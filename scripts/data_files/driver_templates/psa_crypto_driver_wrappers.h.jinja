@@ -2658,6 +2658,20 @@ static inline psa_status_t psa_driver_wrapper_mac_compute(
     size_t mac_size,
     size_t *mac_length )
 {
+// TODO: Continue here.
+{% with entry_point = "import_key" -%}
+{% macro entry_point_param(driver) -%}
+attributes,
+key_buffer,
+key_buffer_size,
+alg,
+input,
+input_length,
+mac,
+mac_size,
+mac_length
+{% endmacro %}
+
     psa_status_t status = PSA_ERROR_CORRUPTION_DETECTED;
     psa_key_location_t location =
         PSA_KEY_LIFETIME_GET_LOCATION( psa_get_key_lifetime(attributes) );

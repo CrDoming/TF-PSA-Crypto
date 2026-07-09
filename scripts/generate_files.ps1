@@ -19,11 +19,14 @@ if (-not $vsInstallationPath)
     exit 1
 }
 
-$vcvarsallPath = Join-Path $vsInstallationPath "VC\Auxiliary\Build\vcvarsall.bat"
-cmd /c """$vcvarsallPath"" amd64 & set" | ForEach-Object {
-    if ($_ -match "^([^=]*)=(.*)$")
-    {
-        Set-Item -Force -Path "env:\$( $matches[1] )" -Value "$( $matches[2] )"
+if (-not $env:VCToolsInstallDir)
+{
+    $vcvarsallPath = Join-Path $vsInstallationPath "VC\Auxiliary\Build\vcvarsall.bat"
+    cmd /c "`"$vcvarsallPath`" amd64 & set" | ForEach-Object {
+        if ($_ -match "^([^=]*)=(.*)$")
+        {
+            Set-Item -Force -Path "env:\$( $matches[1] )" -Value "$( $matches[2] )"
+        }
     }
 }
 

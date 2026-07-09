@@ -9,20 +9,22 @@
     {
       "mbedtls/c_condition": "defined(ENTERPRISE_DRIVER_ENABLED)",
       "entry_points": [
+        "generate_key",
         "import_key",
         "export_public_key",
-        "key_agreement",
         "mac_compute",
         "aead_encrypt",
-        "aead_decrypt"
+        "aead_decrypt",
+        "key_agreement"
       ],
       "algorithms": [
         "PSA_ALG_ECDH",
         "PSA_ALG_HMAC(PSA_ALG_SHA_256)",
-        "PSA_ALG_HKDF(PSA_ALG_SHA_256)"
+        "PSA_ALG_AEAD_WITH_SHORTENED_TAG(PSA_ALG_CCM, 8)"
       ],
       "key_types": [
         "PSA_KEY_TYPE_ECC_KEY_PAIR(PSA_ECC_FAMILY_SECP_R1)",
+        "PSA_KEY_TYPE_HMAC",
         "PSA_KEY_TYPE_AES"
       ],
       "key_sizes": [

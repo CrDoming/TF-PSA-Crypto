@@ -1,0 +1,10 @@
+BasedOnStyle: Chromium
+IndentWidth: 4
+BinPackParameters: OnePerLine
+BinPackArguments: false
+Cpp11BracedListStyle: true
+#BreakAfterOpenBracketBracedList: false
+#BreakAfterOpenBracketFunction: true
+#BreakAfterOpenBracketIf: false
+#BreakAfterOpenBracketLoop: false
+#BreakAfterOpenBracketSwitch: false
