@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stdlib.h>
 #include <psa/crypto.h>
 #include <string.h>
@@ -96,35 +97,185 @@ psa_status_t CLI_Decrypt(
     size_t *pPlaintextWrittenByteCount);
 
 // TODO: Discard.
-static void add(const uint8_t* augend, const uint8_t* addend, uint8_t* sum, size_t byte_count) {
-    uint8_t carry = 0;
-    for (size_t byte_index = byte_count - 1; byte_index < byte_count; byte_index--) {
-        uint8_t augend_byte = augend[byte_index];
-        uint8_t addend_byte = addend[byte_index];
-        uint8_t sum_byte = 0;
-        for (uint8_t bit_exp = 0; bit_exp < 8; bit_exp++) {
-            uint8_t augend_bit = (augend_byte >> bit_exp) & 1;
-            uint8_t addend_bit = (addend_byte >> bit_exp) & 1;
-            sum_byte |= (augend_bit ^ addend_bit ^ carry) << bit_exp;
-            carry = (augend_bit & addend_bit) | (augend_bit & carry) | (addend_bit & carry);
+static int compare(
+    const uint8_t *buffer_1,
+    const uint8_t *buffer_2,
+    size_t byte_count) {
+    for (size_t byte_index = 0; byte_index < byte_count; byte_index++) {
+        if (buffer_1[byte_index] < buffer_2[byte_index]) {
+            return -1;
         }
 
-        sum[byte_index] = sum_byte;
+        if (buffer_1[byte_index] > buffer_2[byte_index]) {
+            return 1;
+        }
     }
+
+    return 0;
+}
+
+static void shift_left(uint8_t *buffer, size_t byte_count, const uint8_t push_bit) {
+    uint8_t carry = push_bit & 1;
+    for (size_t byte_index = byte_count - 1; byte_index < byte_count; byte_index--) {
+        const uint8_t next_carry = (buffer[byte_index] & 0b10000000) != 0 ? 1 : 0;
+        buffer[byte_index] = (buffer[byte_index] << 1) | carry;
+        carry = next_carry;
+    }
+}
+
+static void add(
+    const uint8_t *augend,
+    const uint8_t *addend,
+    uint8_t *sum,
+    const size_t byte_count) {
+    uint16_t carry = 0;
+    for (size_t byte_index = byte_count - 1; byte_index < byte_count; byte_index--) {
+        const uint16_t result = (uint16_t) augend[byte_index] + (uint16_t) addend[byte_index] + carry;
+        sum[byte_index] = (uint8_t) result;
+        carry = result >> 8;
+    }
+}
+
+static void subtract(
+    const uint8_t *minuend,
+    const uint8_t *subtrahend,
+    uint8_t *difference,
+    const size_t byte_count) {
+    int16_t borrow = 0;
+    for (size_t byte_index = byte_count - 1; byte_index < byte_count; byte_index--) {
+        int16_t result = (int16_t) minuend[byte_index] - (int16_t) subtrahend[byte_index] - borrow;
+        if (result < 0) {
+            result += 256;
+            borrow = 1;
+        } else {
+            borrow = 0;
+        }
+
+        difference[byte_index] = (uint8_t) result;
+    }
+}
+
+static void multiply(
+    const uint8_t *multiplicand,
+    const uint8_t *multiplier,
+    uint8_t *product,
+    size_t byte_count) {
+    (void) memset(product, 0, byte_count);
+
+    for (size_t byte_index = 0; byte_index < byte_count; byte_index++) {
+        const uint8_t multiplier_byte = multiplier[byte_index];
+        for (uint8_t bit_exp = 7; bit_exp < 8; bit_exp--) {
+            shift_left(product, byte_count, 0);
+
+            if ((multiplier_byte & (1 << bit_exp)) != 0) {
+                add(product, multiplicand, product, byte_count);
+            }
+        }
+    }
+}
+
+static void divide(
+    const uint8_t *dividend,
+    const uint8_t *divisor,
+    uint8_t *quotient,
+    uint8_t *remainder,
+    const size_t byte_count) {
+    (void) memset(quotient, 0, byte_count);
+    (void) memset(remainder, 0, byte_count);
+
+    if (compare(divisor, quotient, byte_count) == 0) {
+        return;
+    }
+
+    for (size_t byte_index = 0; byte_index < byte_count; byte_index++) {
+        const uint8_t dividend_byte = dividend[byte_index];
+        for (uint8_t bit_exp = 7; bit_exp < 8; bit_exp--) {
+            shift_left(remainder, byte_count, (dividend_byte >> bit_exp) & 1);
+
+            if (compare(remainder, divisor, byte_count) >= 0) {
+                subtract(remainder, divisor, remainder, byte_count);
+                quotient[byte_index] |= 1 << bit_exp;
+            }
+        }
+    }
+}
+
+static void add_points(
+    const uint8_t *in_point_1_x,
+    const uint8_t *in_point_1_y,
+    const uint8_t *in_point_2_x,
+    const uint8_t *in_point_2_y,
+    const uint8_t *prime,
+    uint8_t *out_point_x,
+    uint8_t *out_point_y,
+    uint8_t *scratch_1,
+    uint8_t *scratch_2,
+    const size_t byte_count) {
+    if (byte_count == 0) {
+        return;
+    }
+
+    // TODO: Handle equal x-coords.
+
+    subtract(in_point_2_y, in_point_1_y, out_point_y, byte_count);
+    subtract(in_point_2_x, in_point_1_x, out_point_x, byte_count);
+    divide(out_point_y, out_point_x, scratch_1, scratch_2, byte_count);
+
+    multiply(scratch_1, scratch_1, out_point_x, byte_count);
+    subtract(out_point_x, in_point_1_x, out_point_x, byte_count);
+    subtract(out_point_x, in_point_2_x, out_point_x, byte_count);
+
+    subtract(in_point_1_x, out_point_x, scratch_2, byte_count);
+    multiply(scratch_1, scratch_2, out_point_y, byte_count);
+    subtract(out_point_y, in_point_1_y, out_point_y, byte_count);
 }
 
 int main(int argc, char **argv) {
     // TODO: Discard.
-    uint8_t augend[] = {0x00, 0x00, 0xFF, 0xFF};
-    uint8_t addend[] = {0x00, 0x00, 0x00, 0x02};
+    uint8_t augend[] = {0x00, 0x00, 0x00, 0xFF};
+    uint8_t addend[] = {0x00, 0x00, 0x00, 0x04};
     uint8_t sum[] = {0x00, 0x00, 0x00, 0x00};
-    add(augend, addend, sum, sizeof(sum));
+    uint8_t scratch[] = {0x00, 0x00, 0x00, 0x00};
 
-    printf("Sum = 0x");
-    for (size_t i = 0; i < sizeof(sum); i++) {
-        printf("%02x", sum[i]);
-    }
-    printf("\n");
+    add(augend, addend, sum, sizeof(sum));
+    printf("SUM = ");
+    CLI_PrintBytes(sum, sizeof(sum));
+
+    subtract(augend, addend, sum, sizeof(sum));
+    printf("DIFFERENCE = ");
+    CLI_PrintBytes(sum, sizeof(sum));
+
+    multiply(augend, addend, sum, sizeof(sum));
+    printf("PRODUCT = ");
+    CLI_PrintBytes(sum, sizeof(sum));
+
+    divide(augend, addend, sum, scratch, sizeof(sum));
+    printf("QUOTIENT = ");
+    CLI_PrintBytes(sum, sizeof(sum));
+    printf("REMAINDER = ");
+    CLI_PrintBytes(scratch, sizeof(sum));
+
+    const uint8_t g_x[32] = {
+        0x6b, 0x17, 0xd1, 0xf2, 0xe1, 0x2c, 0x42, 0x47, 0xf8, 0xbc, 0xe6, 0xe5, 0x63, 0xa4, 0x40, 0xf2, 0x77, 0x03,
+        0x7d, 0x81, 0x2d, 0xeb, 0x33, 0xa0, 0xf4, 0xa1, 0x39, 0x45, 0xd8, 0x98, 0xc2, 0x96
+    };
+    const uint8_t g_y[32] = {
+        0x4f, 0xe3, 0x42, 0xe2, 0xfe, 0x1a, 0x7f, 0x9b, 0x8e, 0xe7, 0xeb, 0x4a, 0x7c, 0x0f, 0x9e, 0x16, 0x2b, 0xce,
+        0x33, 0x57, 0x6b, 0x31, 0x5e, 0xce, 0xcb, 0xb6, 0x40, 0x68, 0x37, 0xbf, 0x51, 0xf5
+    };
+    const uint8_t p[32] = {
+        // 0xffffffff00000001000000000000000000000000ffffffffffffffffffffffff
+    };
+    uint8_t r_x[32] = {0};
+    uint8_t r_y[32] = {0};
+    uint8_t s_1[32] = {0};
+    uint8_t s_2[32] = {0};
+    add_points(g_x, g_y, g_x, g_y, p, r_x, r_y, s_1, s_2, sizeof(g_x));
+
+    printf("R_1 = ");
+    CLI_PrintBytes(r_x, sizeof(r_x));
+    printf("R_2 = ");
+    CLI_PrintBytes(r_y, sizeof(r_y));
 
     int exitCode = 1;
     psa_key_id_t auditLogKeyId = PSA_KEY_ID_USER_MIN + 0;
@@ -213,23 +364,23 @@ int main(int argc, char **argv) {
     }
 
     // TODO: Discard.
-    printf("HOST Public Key = 0x");
+    printf("HOST Public Key = ");
     CLI_PrintBytes(hostPublicKey, writtenByteCount);
     uint8_t hostPrivateKey[32] = {0};
-    (void)psa_export_key(
+    (void) psa_export_key(
         hostKeyId,
         hostPrivateKey,
         sizeof(hostPrivateKey),
         &writtenByteCount);
     uint8_t somePublicKey[65] = {0};
-    (void)enterprise_transparent_export_public_key(
+    (void) enterprise_transparent_export_public_key(
         NULL,
         hostPrivateKey,
         sizeof(hostPrivateKey),
         somePublicKey,
         sizeof(somePublicKey),
         &writtenByteCount);
-    printf("Some Public Key = 0x");
+    printf("Some Public Key = ");
     CLI_PrintBytes(somePublicKey, writtenByteCount);
 
     uint8_t smibPublicKey[65] = {0};
@@ -505,7 +656,12 @@ psa_status_t CLI_CreateEccPrivateKey(psa_key_id_t keyId) {
     psa_set_key_algorithm(&keyAttributes, PSA_ALG_ECDH);
 
     psa_key_id_t generatedKeyId = 0;
-    return psa_generate_key(&keyAttributes, &generatedKeyId);
+    // TODO: Reinstate.
+    // return psa_generate_key(&keyAttributes, &generatedKeyId);
+    // TODO: Discard.
+    uint8_t privateKey[32] = {0};
+    privateKey[31] = 0x02;
+    return psa_import_key(&keyAttributes, privateKey, sizeof(privateKey), &generatedKeyId);
 }
 
 psa_status_t CLI_GetPublicKey(

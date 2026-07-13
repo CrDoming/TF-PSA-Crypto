@@ -3,7 +3,20 @@
 #include <string.h>
 #include <psa/crypto.h>
 
-static void add(const uint8_t *augend, const uint8_t *addend, uint8_t *sum, size_t byte_count);
+static void add(
+    const uint8_t *augend,
+    const size_t augend_byte_count,
+    const uint8_t *addend,
+    const size_t addend_byte_count,
+    uint8_t *sum,
+    const size_t sum_byte_count);
+
+static void multiply(
+    const uint8_t *multiplicand,
+    const uint8_t *multiplier,
+    uint8_t *product,
+    uint8_t *scratch,
+    size_t byte_count);
 
 psa_status_t enterprise_transparent_generate_key(
     const psa_key_attributes_t *attributes,
@@ -162,30 +175,30 @@ psa_status_t enterprise_transparent_export_public_key(
 
     uint8_t r_x[32] = {0};
     uint8_t r_y[32] = {0};
-
-    (void)memcpy(r_x, g_x, 32);
-    (void)memcpy(r_y, g_y, 32);
-
-    uint8_t bit_exp = 6;
-    for (size_t byte_index = 0; byte_index < 32; byte_index++) {
-        while (bit_exp < 8) {
-            add(r_x, r_x, r_x, 32);
-            add(r_y, r_y, r_y, 32);
-
-            if (((key_buffer[byte_index] >> bit_exp) & 1) == 1) {
-                add(r_x, g_x, r_x, 32);
-                add(r_y, g_y, r_y, 32);
-            }
-
-            bit_exp--;
-        }
-
-        bit_exp = 8;
-    }
+    //
+    // (void) memcpy(r_x, g_x, 32);
+    // (void) memcpy(r_y, g_y, 32);
+    //
+    // uint8_t bit_exp = 6;
+    // for (size_t byte_index = 0; byte_index < 32; byte_index++) {
+    //     while (bit_exp < 8) {
+    //         add(r_x, r_x, r_x, 32);
+    //         add(r_y, r_y, r_y, 32);
+    //
+    //         if (((key_buffer[byte_index] >> bit_exp) & 1) == 1) {
+    //             add(r_x, g_x, r_x, 32);
+    //             add(r_y, g_y, r_y, 32);
+    //         }
+    //
+    //         bit_exp--;
+    //     }
+    //
+    //     bit_exp = 7;
+    // }
 
     data[0] = 0x04;
-    (void)memcpy(data + 1, r_x, 32);
-    (void)memcpy(data + 33, r_y, 32);
+    (void) memcpy(data + 1, r_x, 32);
+    (void) memcpy(data + 33, r_y, 32);
     *data_length = 65;
 
     return PSA_SUCCESS;
@@ -251,19 +264,122 @@ psa_status_t enterprise_transparent_key_agreement(
     return PSA_ERROR_GENERIC_ERROR;
 }
 
-static void add(const uint8_t *augend, const uint8_t *addend, uint8_t *sum, size_t byte_count) {
-    uint8_t carry = 0;
-    for (size_t byte_index = byte_count - 1; byte_index < byte_count; byte_index--) {
-        uint8_t augend_byte = augend[byte_index];
-        uint8_t addend_byte = addend[byte_index];
-        uint8_t sum_byte = 0;
-        for (uint8_t bit_exp = 0; bit_exp < 8; bit_exp++) {
-            uint8_t augend_bit = (augend_byte >> bit_exp) & 1;
-            uint8_t addend_bit = (addend_byte >> bit_exp) & 1;
-            sum_byte |= (augend_bit ^ addend_bit ^ carry) << bit_exp;
-            carry = (augend_bit & addend_bit) | (augend_bit & carry) | (addend_bit & carry);
+static void add(
+    const uint8_t *augend,
+    const size_t augend_byte_count,
+    const uint8_t *addend,
+    const size_t addend_byte_count,
+    uint8_t *sum,
+    const size_t sum_byte_count) {
+    if ((augend_byte_count == 0 && addend_byte_count == 0)
+        || sum_byte_count == 0
+        || augend_byte_count > sum_byte_count
+        || addend_byte_count > sum_byte_count) {
+        return;
+    }
+
+    (void) memset(sum, 0, sum_byte_count);
+
+    uint16_t carry = 0;
+    for (size_t byte_index = sum_byte_count - 1; byte_index < sum_byte_count; byte_index--) {
+        if (byte_index >= augend_byte_count && byte_index >= addend_byte_count && carry == 0) {
+            break;
         }
 
-        sum[byte_index] = sum_byte;
+        const uint8_t augend_byte = byte_index < augend_byte_count ? augend[byte_index] : 0;
+        const uint8_t addend_byte = byte_index < addend_byte_count ? addend[byte_index] : 0;
+        const uint16_t result = (uint16_t) augend_byte + (uint16_t) addend_byte + carry;
+        sum[byte_index] = (uint8_t) result;
+        carry = result >> 8;
     }
 }
+
+static void subtract(
+    const uint8_t *minuend,
+    const size_t minuend_byte_count,
+    const uint8_t *subtrahend,
+    const size_t subtrahend_byte_count,
+    uint8_t *difference,
+    const size_t difference_byte_count) {
+    if ((minuend_byte_count == 0 && subtrahend_byte_count == 0)
+        || difference_byte_count == 0
+        || minuend_byte_count > difference_byte_count
+        || subtrahend_byte_count > difference_byte_count) {
+        return;
+    }
+
+    for (size_t byte_index = 0; byte_index < subtrahend_byte_count; byte_index++) {
+        difference[byte_index] = ~subtrahend[byte_index];
+    }
+
+    const uint8_t one[1] = {1};
+    add(
+        difference,
+        subtrahend_byte_count,
+        one,
+        sizeof(one),
+        difference,
+        difference_byte_count);
+
+    add(
+        minuend,
+        minuend_byte_count,
+        difference,
+        subtrahend_byte_count,
+        difference,
+        difference_byte_count);
+}
+
+static void add_points(
+    const uint8_t *point_a_x,
+    const uint8_t *point_a_y,
+    const uint8_t *point_b_x,
+    const uint8_t *point_b_y,
+    uint8_t *result_x,
+    uint8_t *result_y,
+    const size_t byte_count) {
+    if (byte_count == 0) {
+        return;
+    }
+}
+
+static void double_point(
+    const uint8_t *point_x,
+    const uint8_t *point_y,
+    uint8_t *result_x,
+    uint8_t *result_y,
+    const size_t byte_count) {
+    if (byte_count == 0) {
+        return;
+    }
+}
+
+static void shift_left(uint8_t *buffer, size_t byte_count) {
+    uint8_t carry = 0;
+    for (size_t byte_index = byte_count - 1; byte_index < byte_count; byte_index--) {
+        const uint8_t next_carry = (buffer[byte_index] & 0x80) ? 1 : 0;
+        buffer[byte_index] = (buffer[byte_index] << 1) | carry;
+        carry = next_carry;
+    }
+}
+
+// static void multiply(
+//     const uint8_t *multiplicand,
+//     const uint8_t *multiplier,
+//     uint8_t *product,
+//     uint8_t *scratch,
+//     size_t byte_count) {
+//     memset(product, 0, byte_count);
+//     memcpy(scratch, multiplicand, byte_count);
+//
+//     for (size_t byte_index = byte_count - 1; byte_index < byte_count; byte_index--) {
+//         const uint8_t multiplier_byte = multiplier[byte_index];
+//         for (uint8_t bit_exp = 0; bit_exp < 8; bit_exp++) {
+//             if ((multiplier_byte & (1 << bit_exp)) != 0) {
+//                 add(product, scratch, product, byte_count);
+//             }
+//
+//             shift_left(scratch, byte_count);
+//         }
+//     }
+// }
