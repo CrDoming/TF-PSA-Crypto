@@ -5,4 +5,5 @@ add_subdirectory(psa)
 add_subdirectory(test)
 add_subdirectory(fuzz)
 
+add_subdirectory(sencrypt)
 add_subdirectory(cli)
