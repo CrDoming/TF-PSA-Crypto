@@ -111,7 +111,7 @@
 
 /* PSA crypto configuration */
 #if defined(TF_PSA_CRYPTO_CONFIG_FILE)
-#include TF_PSA_CRYPTO_CONFIG_FILE
+#include "../../programs/sencrypt/include/crypto_config_alt.h"
 #else
 #include "psa/crypto_config.h"
 #endif

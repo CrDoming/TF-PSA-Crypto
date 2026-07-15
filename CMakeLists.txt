@@ -117,13 +117,6 @@ option(USE_SHARED_TF_PSA_CRYPTO_LIBRARY "Build TF-PSA-Crypto shared library." OF
 option(LINK_WITH_PTHREAD "Explicitly link Mbed TLS library to pthread." OFF)
 option(LINK_WITH_TRUSTED_STORAGE "Explicitly link Mbed TLS library to trusted_storage." OFF)
 option(MSVC_STATIC_RUNTIME "Build the libraries with /MT compiler flag" OFF)
-option(MACROS "Build the libraries with custom macros separated by semicolons." OFF)
-
-if (MACROS)
-    foreach (macro IN LISTS MACROS)
-        add_compile_definitions(${macro})
-    endforeach()
-endif()
 
 set(tfpsacrypto_target "${TF_PSA_CRYPTO_TARGET_PREFIX}tfpsacrypto")
 if (USE_STATIC_TF_PSA_CRYPTO_LIBRARY)

@@ -1,0 +1,15 @@
+LIBRARY sencrypt
+EXPORTS
+    mbedtls_psa_crypto_free
+    mbedtls_threading_set_alt
+    mbedtls_threading_free_alt
+    psa_crypto_init
+    psa_generate_key
+    psa_import_key
+    psa_destroy_key
+    psa_export_key
+    psa_export_public_key
+    psa_mac_compute
+    psa_aead_encrypt
+    psa_aead_decrypt
+    psa_raw_key_agreement

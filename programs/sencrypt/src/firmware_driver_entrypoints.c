@@ -1,13 +1,12 @@
-#include "enterprise/enterprise_driver_entrypoints.h"
+#include "../include/firmware_driver_entrypoints.h"
 
 #include <psa/crypto.h>
-#include <string.h>
 
-psa_status_t enterprise_transparent_generate_key(
-    const psa_key_attributes_t* attributes,
-    uint8_t* key_buffer,
+psa_status_t firmware_transparent_generate_key(
+    const psa_key_attributes_t *attributes,
+    uint8_t *key_buffer,
     size_t key_buffer_size,
-    size_t* key_buffer_length) {
+    size_t *key_buffer_length) {
     if (attributes == NULL || key_buffer == NULL || key_buffer_length == NULL) {
         return PSA_ERROR_INVALID_ARGUMENT;
     }
@@ -28,17 +27,19 @@ psa_status_t enterprise_transparent_generate_key(
 
     // TODO: In a later PR, add logic.
 
+    *key_buffer_length = 32;
+
     return PSA_SUCCESS;
 }
 
-psa_status_t enterprise_transparent_import_key(
-    const psa_key_attributes_t* attributes,
-    const uint8_t* data,
+psa_status_t firmware_transparent_import_key(
+    const psa_key_attributes_t *attributes,
+    const uint8_t *data,
     size_t data_length,
-    uint8_t* key_buffer,
+    uint8_t *key_buffer,
     size_t key_buffer_size,
-    size_t* key_buffer_length,
-    size_t* bits) {
+    size_t *key_buffer_length,
+    size_t *bits) {
     if (attributes == NULL || data == NULL || key_buffer == NULL ||
         key_buffer_length == NULL || bits == NULL) {
         return PSA_ERROR_INVALID_ARGUMENT;
@@ -63,19 +64,20 @@ psa_status_t enterprise_transparent_import_key(
         return PSA_ERROR_BUFFER_TOO_SMALL;
     }
 
-    memcpy(key_buffer, data, data_length);
+    // TODO: In a later PR, add logic to copy contents of data to key_buffer.
+
     *key_buffer_length = data_length;
 
     return PSA_SUCCESS;
 }
 
-psa_status_t enterprise_transparent_export_public_key(
-    const psa_key_attributes_t* attributes,
-    const uint8_t* key_buffer,
+psa_status_t firmware_transparent_export_public_key(
+    const psa_key_attributes_t *attributes,
+    const uint8_t *key_buffer,
     size_t key_buffer_size,
-    uint8_t* data,
+    uint8_t *data,
     size_t data_size,
-    size_t* data_length) {
+    size_t *data_length) {
     if (attributes == NULL || key_buffer == NULL || data == NULL ||
         data_length == NULL) {
         return PSA_ERROR_INVALID_ARGUMENT;
@@ -97,19 +99,21 @@ psa_status_t enterprise_transparent_export_public_key(
 
     // TODO: In a later PR, add logic.
 
+    *data_length = 65;
+
     return PSA_SUCCESS;
 }
 
-psa_status_t enterprise_transparent_mac_compute(
-    const psa_key_attributes_t* attributes,
-    const uint8_t* key_buffer,
+psa_status_t firmware_transparent_mac_compute(
+    const psa_key_attributes_t *attributes,
+    const uint8_t *key_buffer,
     size_t key_buffer_size,
     psa_algorithm_t alg,
-    const uint8_t* input,
+    const uint8_t *input,
     size_t input_length,
-    uint8_t* mac,
+    uint8_t *mac,
     size_t mac_size,
-    size_t* mac_length) {
+    size_t *mac_length) {
     if (attributes == NULL || key_buffer == NULL || key_buffer_size <= 0 ||
         input == NULL || input_length <= 0 || mac == NULL ||
         mac_length == NULL) {
@@ -136,23 +140,25 @@ psa_status_t enterprise_transparent_mac_compute(
 
     // TODO: In a later PR, add logic.
 
+    *mac_length = 32;
+
     return PSA_SUCCESS;
 }
 
-psa_status_t enterprise_transparent_aead_encrypt(
-    const psa_key_attributes_t* attributes,
-    const uint8_t* key_buffer,
+psa_status_t firmware_transparent_aead_encrypt(
+    const psa_key_attributes_t *attributes,
+    const uint8_t *key_buffer,
     size_t key_buffer_size,
     psa_algorithm_t alg,
-    const uint8_t* nonce,
+    const uint8_t *nonce,
     size_t nonce_length,
-    const uint8_t* additional_data,
+    const uint8_t *additional_data,
     size_t additional_data_length,
-    const uint8_t* plaintext,
+    const uint8_t *plaintext,
     size_t plaintext_length,
-    uint8_t* ciphertext,
+    uint8_t *ciphertext,
     size_t ciphertext_size,
-    size_t* ciphertext_length) {
+    size_t *ciphertext_length) {
     if (attributes == NULL || key_buffer == NULL || nonce == NULL ||
         nonce_length < 7 || nonce_length > 13 || plaintext == NULL ||
         plaintext_length <= 0 || ciphertext == NULL ||
@@ -178,29 +184,31 @@ psa_status_t enterprise_transparent_aead_encrypt(
         return PSA_ERROR_NOT_SUPPORTED;
     }
 
-    if (ciphertext_size < plaintext_length + nonce_length + 8) {
+    if (ciphertext_size < plaintext_length + 8) {
         return PSA_ERROR_BUFFER_TOO_SMALL;
     }
 
     // TODO: In a later PR, add logic.
 
+    *ciphertext_length = plaintext_length + 8;
+
     return PSA_SUCCESS;
 }
 
-psa_status_t enterprise_transparent_aead_decrypt(
-    const psa_key_attributes_t* attributes,
-    const uint8_t* key_buffer,
+psa_status_t firmware_transparent_aead_decrypt(
+    const psa_key_attributes_t *attributes,
+    const uint8_t *key_buffer,
     size_t key_buffer_size,
     psa_algorithm_t alg,
-    const uint8_t* nonce,
+    const uint8_t *nonce,
     size_t nonce_length,
-    const uint8_t* additional_data,
+    const uint8_t *additional_data,
     size_t additional_data_length,
-    const uint8_t* ciphertext,
+    const uint8_t *ciphertext,
     size_t ciphertext_length,
-    uint8_t* plaintext,
+    uint8_t *plaintext,
     size_t plaintext_size,
-    size_t* plaintext_length) {
+    size_t *plaintext_length) {
     if (attributes == NULL || key_buffer == NULL || nonce == NULL ||
         nonce_length < 7 || nonce_length > 13 || ciphertext == NULL ||
         ciphertext_length <= 0 || plaintext == NULL ||
@@ -226,25 +234,27 @@ psa_status_t enterprise_transparent_aead_decrypt(
         return PSA_ERROR_NOT_SUPPORTED;
     }
 
-    if (plaintext_size < ciphertext_length - nonce_length - 8) {
+    if (plaintext_size < ciphertext_length - 8) {
         return PSA_ERROR_BUFFER_TOO_SMALL;
     }
 
-    // TODO: In a later PR, add logic here.
+    // TODO: In a later PR, add logic.
+
+    *plaintext_length = ciphertext_length - 8;
 
     return PSA_SUCCESS;
 }
 
-psa_status_t enterprise_transparent_key_agreement(
-    const psa_key_attributes_t* attributes,
-    const uint8_t* key_buffer,
+psa_status_t firmware_transparent_key_agreement(
+    const psa_key_attributes_t *attributes,
+    const uint8_t *key_buffer,
     size_t key_buffer_size,
     psa_algorithm_t alg,
-    const uint8_t* peer_key,
+    const uint8_t *peer_key,
     size_t peer_key_length,
-    uint8_t* shared_secret,
+    uint8_t *shared_secret,
     size_t shared_secret_size,
-    size_t* shared_secret_length) {
+    size_t *shared_secret_length) {
     if (attributes == NULL || key_buffer == NULL || peer_key == NULL ||
         shared_secret == NULL || shared_secret_length == NULL) {
         return PSA_ERROR_INVALID_ARGUMENT;
@@ -272,7 +282,9 @@ psa_status_t enterprise_transparent_key_agreement(
         return PSA_ERROR_BUFFER_TOO_SMALL;
     }
 
-    // TODO: In a later PR, add logic here.
+    // TODO: In a later PR, add logic.
+
+    *shared_secret_length = 32;
 
     return PSA_SUCCESS;
 }

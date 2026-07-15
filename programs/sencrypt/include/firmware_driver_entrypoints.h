@@ -1,21 +1,20 @@
-#ifndef ENTERPRISE_DRIVER_ENTRYPOINTS_H
-#define ENTERPRISE_DRIVER_ENTRYPOINTS_H
+#pragma once
 
-#ifdef ENTERPRISE_DRIVER_ENABLED
+#ifdef FIRMWARE_DRIVER_ENABLED
 #ifndef PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT
 #define PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT
 #endif /* PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT */
-#endif /* ENTERPRISE_DRIVER_ENABLED */
+#endif /* FIRMWARE_DRIVER_ENABLED */
 
 #include "psa/crypto_types.h"
 
-psa_status_t enterprise_transparent_generate_key(
+psa_status_t firmware_transparent_generate_key(
     const psa_key_attributes_t* attributes,
     uint8_t* key_buffer,
     size_t key_buffer_size,
     size_t* key_buffer_length);
 
-psa_status_t enterprise_transparent_import_key(
+psa_status_t firmware_transparent_import_key(
     const psa_key_attributes_t* attributes,
     const uint8_t* data,
     size_t data_length,
@@ -24,7 +23,7 @@ psa_status_t enterprise_transparent_import_key(
     size_t* key_buffer_length,
     size_t* bits);
 
-psa_status_t enterprise_transparent_export_public_key(
+psa_status_t firmware_transparent_export_public_key(
     const psa_key_attributes_t* attributes,
     const uint8_t* key_buffer,
     size_t key_buffer_size,
@@ -32,7 +31,7 @@ psa_status_t enterprise_transparent_export_public_key(
     size_t data_size,
     size_t* data_length);
 
-psa_status_t enterprise_transparent_mac_compute(
+psa_status_t firmware_transparent_mac_compute(
     const psa_key_attributes_t* attributes,
     const uint8_t* key_buffer,
     size_t key_buffer_size,
@@ -43,7 +42,7 @@ psa_status_t enterprise_transparent_mac_compute(
     size_t mac_size,
     size_t* mac_length);
 
-psa_status_t enterprise_transparent_aead_encrypt(
+psa_status_t firmware_transparent_aead_encrypt(
     const psa_key_attributes_t* attributes,
     const uint8_t* key_buffer,
     size_t key_buffer_size,
@@ -58,7 +57,7 @@ psa_status_t enterprise_transparent_aead_encrypt(
     size_t ciphertext_size,
     size_t* ciphertext_length);
 
-psa_status_t enterprise_transparent_aead_decrypt(
+psa_status_t firmware_transparent_aead_decrypt(
     const psa_key_attributes_t* attributes,
     const uint8_t* key_buffer,
     size_t key_buffer_size,
@@ -73,7 +72,7 @@ psa_status_t enterprise_transparent_aead_decrypt(
     size_t plaintext_size,
     size_t* plaintext_length);
 
-psa_status_t enterprise_transparent_key_agreement(
+psa_status_t firmware_transparent_key_agreement(
     const psa_key_attributes_t* attributes,
     const uint8_t* key_buffer,
     size_t key_buffer_size,
@@ -83,5 +82,3 @@ psa_status_t enterprise_transparent_key_agreement(
     uint8_t* shared_secret,
     size_t shared_secret_size,
     size_t* shared_secret_length);
-
-#endif /* ENTERPRISE_DRIVER_ENTRYPOINTS_H */

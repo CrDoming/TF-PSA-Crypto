@@ -43,7 +43,7 @@ typedef pthread_cond_t mbedtls_platform_condition_variable_t;
 #if defined(MBEDTLS_THREADING_ALT)
 /* You should define the types mbedtls_platform_mutex_t and
  * mbedtls_platform_condition_variable_t in your header. */
-#include "threading_alt.h"
+#include "../../programs/sencrypt/include/threading_alt.h"
 
 /**
  * \brief           Set your alternate threading implementation function
