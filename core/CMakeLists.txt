@@ -11,7 +11,8 @@ list(FIND src_crypto
 if(NOT _idx EQUAL -1)
     list(REMOVE_AT src_crypto ${_idx})
 endif()
-list(APPEND src_crypto psa_crypto_driver_wrappers_no_static.c)
+# TODO: In a later PR, reinstate.
+#list(APPEND src_crypto psa_crypto_driver_wrappers_no_static.c)
 
 if(GEN_FILES)
     add_custom_command(

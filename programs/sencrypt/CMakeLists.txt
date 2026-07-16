@@ -6,14 +6,29 @@ if (ENABLE_FIRMWARE_DRIVER)
     add_compile_definitions(FIRMWARE_DRIVER_ENABLED=1)
 endif ()
 
-set(CORE_DIR "${PROJECT_SOURCE_DIR}/core")
-file(GLOB ${LIBRARY_TARGET_NAME}_SOURCES "${CORE_DIR}/*.c")
+set(${LIBRARY_TARGET_NAME}_SOURCES "")
+
+set(EXTERNAL_SOURCE_DIRS
+        "${PROJECT_SOURCE_DIR}/drivers/builtin/src"
+        "${PROJECT_SOURCE_DIR}/dispatch"
+        "${PROJECT_SOURCE_DIR}/extras"
+        "${PROJECT_SOURCE_DIR}/platform"
+        "${PROJECT_SOURCE_DIR}/utilities"
+        "${PROJECT_SOURCE_DIR}/core"
+)
+
+foreach (_DIR ${EXTERNAL_SOURCE_DIRS})
+    file(GLOB _SOURCES "${_DIR}/*.c")
+    list(APPEND ${LIBRARY_TARGET_NAME}_SOURCES ${_SOURCES})
+endforeach ()
+
 list(FIND ${LIBRARY_TARGET_NAME}_SOURCES
-        "${CORE_DIR}/psa_crypto_driver_wrappers_no_static.c"
+        "${PROJECT_SOURCE_DIR}/core/psa_crypto_driver_wrappers_no_static.c"
         _IDX)
 if (NOT _IDX EQUAL -1)
     list(REMOVE_AT ${LIBRARY_TARGET_NAME}_SOURCES ${_IDX})
 endif ()
+
 list(APPEND ${LIBRARY_TARGET_NAME}_SOURCES
         include/psa_crypto_driver_wrappers.h
         src/platform_alt.c
@@ -27,49 +42,16 @@ if (BUILD_SHARED_LIBS)
     )
 endif ()
 
-set(DRIVER_TARGETS builtin)
+add_library(${LIBRARY_TARGET_NAME} ${${LIBRARY_TARGET_NAME}_SOURCES})
 
-set(TARGET_OBJECTS "")
-foreach (TARGET ${TF_PSA_CRYPTO_OBJLIB_TARGETS} ${DRIVER_TARGETS})
-    target_include_directories(${TARGET}
-            PRIVATE
-            include
-    )
-    target_compile_definitions(${TARGET}
-            PUBLIC
-            TF_PSA_CRYPTO_CONFIG_FILE="include/crypto_config_alt.h")
-
-    if (BUILD_SHARED_LIBS)
-        set_target_properties(${TARGET} PROPERTIES POSITION_INDEPENDENT_CODE ON)
-    endif ()
-
-    list(APPEND TARGET_OBJECTS "$<TARGET_OBJECTS:${TARGET}>")
-endforeach ()
-
-add_library(${LIBRARY_TARGET_NAME} ${${LIBRARY_TARGET_NAME}_SOURCES} ${TARGET_OBJECTS})
-
-# TODO: Fix.
 target_include_directories(${LIBRARY_TARGET_NAME}
         PUBLIC
-        ${PROJECT_BINARY_DIR}/include
-        ${PROJECT_SOURCE_DIR}/include
+        "${PROJECT_SOURCE_DIR}/include"
+        "${PROJECT_SOURCE_DIR}/drivers/builtin/include"
         PRIVATE
         include
-        ${PROJECT_SOURCE_DIR}/core
-        ${TF_PSA_CRYPTO_PRIVATE_INCLUDE_DIRS}
+        ${EXTERNAL_SOURCE_DIRS}
 )
-
-#target_include_directories(${LIBRARY_TARGET_NAME} BEFORE
-#        PRIVATE
-#        include
-#)
-
-foreach (DRIVER_TARGET ${DRIVER_TARGETS})
-    get_target_property(PUBLIC_INCLUDE_DIRS ${DRIVER_TARGET} INTERFACE_INCLUDE_DIRECTORIES)
-    foreach (DIR IN LISTS PUBLIC_INCLUDE_DIRS)
-        target_include_directories(${LIBRARY_TARGET_NAME} PUBLIC $<BUILD_INTERFACE:${DIR}>)
-    endforeach ()
-endforeach ()
 
 tf_psa_crypto_set_base_compile_options(${LIBRARY_TARGET_NAME})
 tf_psa_crypto_set_extra_compile_options(${LIBRARY_TARGET_NAME})
@@ -81,6 +63,10 @@ set_target_properties(${LIBRARY_TARGET_NAME} PROPERTIES
         CXX_VISIBILITY_PRESET hidden
         VISIBILITY_INLINES_HIDDEN ON
 )
+
+if (BUILD_SHARED_LIBS)
+    set_target_properties(${LIBRARY_TARGET_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif ()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
     # GCC & Clang: Split functions/data into separate addressable segments.
@@ -100,8 +86,4 @@ elseif (MSVC)
 
     # /OPT:REF eliminates functions and data that are never referenced.
     target_link_options(${LIBRARY_TARGET_NAME} PRIVATE /OPT:REF)
-endif ()
-
-if (BUILD_SHARED_LIBS)
-    set_target_properties(${LIBRARY_TARGET_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif ()
