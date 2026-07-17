@@ -30,7 +30,7 @@ if (NOT _IDX EQUAL -1)
 endif ()
 
 list(APPEND ${LIBRARY_TARGET_NAME}_SOURCES
-        include/psa_crypto_driver_wrappers.h
+        include/private/psa_crypto_driver_wrappers.h
         src/platform_alt.c
         src/psa_crypto_driver_wrappers_no_static.c
         src/firmware_driver_entrypoints.c
@@ -46,10 +46,11 @@ add_library(${LIBRARY_TARGET_NAME} ${${LIBRARY_TARGET_NAME}_SOURCES})
 
 target_include_directories(${LIBRARY_TARGET_NAME}
         PUBLIC
+        include/public
         "${PROJECT_SOURCE_DIR}/include"
         "${PROJECT_SOURCE_DIR}/drivers/builtin/include"
         PRIVATE
-        include
+        include/private
         ${EXTERNAL_SOURCE_DIRS}
 )
 
@@ -57,7 +58,7 @@ tf_psa_crypto_set_base_compile_options(${LIBRARY_TARGET_NAME})
 tf_psa_crypto_set_extra_compile_options(${LIBRARY_TARGET_NAME})
 target_compile_definitions(${LIBRARY_TARGET_NAME}
         PUBLIC
-        TF_PSA_CRYPTO_CONFIG_FILE="include/crypto_config_alt.h")
+        TF_PSA_CRYPTO_CONFIG_FILE="crypto_config_alt.h")
 
 set_target_properties(${LIBRARY_TARGET_NAME} PROPERTIES
         CXX_VISIBILITY_PRESET hidden

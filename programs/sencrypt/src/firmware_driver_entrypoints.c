@@ -1,6 +1,6 @@
-#include "../include/firmware_driver_entrypoints.h"
+#include "../include/private/firmware_driver_entrypoints.h"
 
-#include <psa/crypto.h>
+#include "psa/crypto.h"
 
 psa_status_t firmware_transparent_generate_key(
     const psa_key_attributes_t *attributes,

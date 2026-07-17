@@ -1,4 +1,4 @@
-python --version *> $null
+python --version >nul 2>&1
 if ($LASTEXITCODE -ne 0)
 {
     Write-Error "Failed to find a Python executable."

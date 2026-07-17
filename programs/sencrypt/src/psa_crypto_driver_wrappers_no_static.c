@@ -31,7 +31,7 @@
 /* BEGIN-driver headers */
 /* Headers for firmware transparent driver */
 #if defined(FIRMWARE_DRIVER_ENABLED)
-#include "../include/firmware_driver_entrypoints.h"
+#include "firmware_driver_entrypoints.h"
 
 #endif
 
