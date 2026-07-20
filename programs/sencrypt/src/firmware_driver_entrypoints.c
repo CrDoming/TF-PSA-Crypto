@@ -1,6 +1,7 @@
-#include "../include/private/firmware_driver_entrypoints.h"
+#include "firmware_driver_entrypoints.h"
 
 #include "psa/crypto.h"
+#include "string.h"
 
 psa_status_t firmware_transparent_generate_key(
     const psa_key_attributes_t *attributes,
@@ -25,7 +26,7 @@ psa_status_t firmware_transparent_generate_key(
         return PSA_ERROR_BUFFER_TOO_SMALL;
     }
 
-    // TODO: In a later PR, add logic.
+    // TODO: Add logic.
 
     *key_buffer_length = 32;
 
@@ -64,8 +65,7 @@ psa_status_t firmware_transparent_import_key(
         return PSA_ERROR_BUFFER_TOO_SMALL;
     }
 
-    // TODO: In a later PR, add logic to copy contents of data to key_buffer.
-
+    (void) memcpy(key_buffer, data, data_length);
     *key_buffer_length = data_length;
 
     return PSA_SUCCESS;
@@ -97,7 +97,7 @@ psa_status_t firmware_transparent_export_public_key(
         return PSA_ERROR_BUFFER_TOO_SMALL;
     }
 
-    // TODO: In a later PR, add logic.
+    // TODO: Add logic.
 
     *data_length = 65;
 
@@ -138,7 +138,7 @@ psa_status_t firmware_transparent_mac_compute(
         return PSA_ERROR_BUFFER_TOO_SMALL;
     }
 
-    // TODO: In a later PR, add logic.
+    // TODO: Add logic.
 
     *mac_length = 32;
 
@@ -188,7 +188,7 @@ psa_status_t firmware_transparent_aead_encrypt(
         return PSA_ERROR_BUFFER_TOO_SMALL;
     }
 
-    // TODO: In a later PR, add logic.
+    // TODO: Add logic.
 
     *ciphertext_length = plaintext_length + 8;
 
@@ -238,7 +238,7 @@ psa_status_t firmware_transparent_aead_decrypt(
         return PSA_ERROR_BUFFER_TOO_SMALL;
     }
 
-    // TODO: In a later PR, add logic.
+    // TODO: Add logic.
 
     *plaintext_length = ciphertext_length - 8;
 
@@ -282,7 +282,7 @@ psa_status_t firmware_transparent_key_agreement(
         return PSA_ERROR_BUFFER_TOO_SMALL;
     }
 
-    // TODO: In a later PR, add logic.
+    // TODO: Add logic.
 
     *shared_secret_length = 32;
 

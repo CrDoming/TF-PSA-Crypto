@@ -30,10 +30,11 @@ if (NOT _IDX EQUAL -1)
 endif ()
 
 list(APPEND ${LIBRARY_TARGET_NAME}_SOURCES
-        include/private/psa_crypto_driver_wrappers.h
+        include/psa_crypto_driver_wrappers.h
+        src/firmware_driver_entrypoints.c
+        src/internal_trusted_storage.c
         src/platform_alt.c
         src/psa_crypto_driver_wrappers_no_static.c
-        src/firmware_driver_entrypoints.c
 )
 
 if (BUILD_SHARED_LIBS)
@@ -46,11 +47,10 @@ add_library(${LIBRARY_TARGET_NAME} ${${LIBRARY_TARGET_NAME}_SOURCES})
 
 target_include_directories(${LIBRARY_TARGET_NAME}
         PUBLIC
-        include/public
+        include
         "${PROJECT_SOURCE_DIR}/include"
         "${PROJECT_SOURCE_DIR}/drivers/builtin/include"
         PRIVATE
-        include/private
         ${EXTERNAL_SOURCE_DIRS}
 )
 

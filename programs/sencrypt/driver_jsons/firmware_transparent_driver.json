@@ -3,7 +3,7 @@
   "type": "transparent",
   "mbedtls/h_condition": "defined(FIRMWARE_DRIVER_ENABLED)",
   "headers": [
-    "../include/firmware_driver_entrypoints.h"
+    "firmware_driver_entrypoints.h"
   ],
   "capabilities": [
     {

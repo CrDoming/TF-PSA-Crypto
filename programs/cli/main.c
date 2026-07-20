@@ -1,4 +1,4 @@
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && !defined(_Noreturn)
 #define _Noreturn __declspec(noreturn)
 #endif
 
@@ -22,7 +22,7 @@ static uint8_t l_MasterDerivationKey[] = {
     0x7d, 0xc5, 0xa5, 0x49, 0x3a, 0x7b, 0x78, 0xbf, 0x89, 0x40
 };
 
-static uint8_t l_Plaintext[] = "Salutations.";
+static char l_Plaintext[] = "Salutations.";
 
 int CLI_InitializeMutex(mbedtls_platform_mutex_t *pMutex);
 
@@ -34,19 +34,19 @@ int CLI_UnlockMutex(mbedtls_platform_mutex_t *pMutex);
 
 void CLI_PrintBytes(const uint8_t *pBytes, size_t byteCount);
 
-void CLI_PrintKey(psa_key_id_t keyId);
+void CLI_PrintKey(psa_key_id_t keyId, const char *pKeyName);
 
 psa_status_t CLI_CreateHmacKey(
-    psa_key_id_t keyId,
     const uint8_t *pKey,
-    size_t keyByteCount);
+    size_t keyByteCount,
+    psa_key_id_t *keyId);
 
 psa_status_t CLI_CreateDerivationKey(
-    psa_key_id_t keyId,
     const uint8_t *pKey,
-    size_t keyByteCount);
+    size_t keyByteCount,
+    psa_key_id_t *keyId);
 
-psa_status_t CLI_CreateEccPrivateKey(psa_key_id_t keyId);
+psa_status_t CLI_CreateEccPrivateKey(psa_key_id_t *keyId);
 
 psa_status_t CLI_GetPublicKey(
     psa_key_id_t privateKeyId,
@@ -69,7 +69,7 @@ psa_status_t CLI_CreateSessionKeyAndSalt(
     size_t inputSaltByteCount,
     const uint8_t *pInfo,
     size_t infoByteCount,
-    psa_key_id_t sessionKeyId,
+    psa_key_id_t *sessionKeyId,
     uint64_t *pOutputSalt);
 
 psa_status_t CLI_Sign(
@@ -102,11 +102,16 @@ psa_status_t CLI_Decrypt(
 
 int main(int argc, char **argv) {
     int exitCode = 1;
-    psa_key_id_t auditLogKeyId = PSA_KEY_ID_USER_MIN + 0;
-    psa_key_id_t masterDerivationKeyId = PSA_KEY_ID_USER_MIN + 1;
-    psa_key_id_t hostKeyId = PSA_KEY_ID_USER_MIN + 2;
-    psa_key_id_t smibKeyId = PSA_KEY_ID_USER_MIN + 3;
-    psa_key_id_t sessionKeyId = PSA_KEY_ID_USER_MIN + 4;
+    psa_key_id_t auditLogKeyId = 0;
+    char auditLogKeyName[] = "Audit Log";
+    psa_key_id_t masterDerivationKeyId = 0;
+    char masterDerivationKeyName[] = "Master Derivation";
+    psa_key_id_t hostKeyId = 0;
+    char hostKeyName[] = "HOST";
+    psa_key_id_t smibKeyId = 0;
+    char smibKeyName[] = "SMIB";
+    psa_key_id_t sessionKeyId = 0;
+    char sessionKeyName[] = "Session";
     psa_key_id_t keyIds[] = {
         auditLogKeyId,
         masterDerivationKeyId,
@@ -134,53 +139,52 @@ int main(int argc, char **argv) {
         goto CLEAN_UP;
     }
 
-    status =
-            CLI_CreateHmacKey(auditLogKeyId, l_AuditLogKey, sizeof(l_AuditLogKey));
+    status = CLI_CreateHmacKey(l_AuditLogKey, sizeof(l_AuditLogKey), &auditLogKeyId);
     if (status != PSA_SUCCESS) {
         printf(
-            "Failed to create a key with ID %d. Status = %d\n",
-            auditLogKeyId,
+            "Failed to create the %s Key. Status = %d\n",
+            auditLogKeyName,
             status);
         goto CLEAN_UP;
     }
 
-    CLI_PrintKey(auditLogKeyId);
+    CLI_PrintKey(auditLogKeyId, auditLogKeyName);
 
     status = CLI_CreateDerivationKey(
-        masterDerivationKeyId,
         l_MasterDerivationKey,
-        sizeof(l_MasterDerivationKey));
+        sizeof(l_MasterDerivationKey),
+        &masterDerivationKeyId);
     if (status != PSA_SUCCESS) {
         printf(
-            "Failed to create a key with ID %d. Status = %d\n",
-            masterDerivationKeyId,
+            "Failed to create the %s Key. Status = %d\n",
+            masterDerivationKeyName,
             status);
         goto CLEAN_UP;
     }
 
-    CLI_PrintKey(masterDerivationKeyId);
+    CLI_PrintKey(masterDerivationKeyId, masterDerivationKeyName);
 
-    status = CLI_CreateEccPrivateKey(hostKeyId);
+    status = CLI_CreateEccPrivateKey(&hostKeyId);
     if (status != PSA_SUCCESS) {
         printf(
-            "Failed to create a key with ID %d. Status = %d\n",
-            hostKeyId,
+            "Failed to create the %s Key. Status = %d\n",
+            hostKeyName,
             status);
         goto CLEAN_UP;
     }
 
-    CLI_PrintKey(hostKeyId);
+    CLI_PrintKey(hostKeyId, hostKeyName);
 
-    status = CLI_CreateEccPrivateKey(smibKeyId);
+    status = CLI_CreateEccPrivateKey(&smibKeyId);
     if (status != PSA_SUCCESS) {
         printf(
-            "Failed to create a key with ID %d. Status = %d\n",
-            smibKeyId,
+            "Failed to create the %s Key. Status = %d\n",
+            smibKeyName,
             status);
         goto CLEAN_UP;
     }
 
-    CLI_PrintKey(smibKeyId);
+    CLI_PrintKey(smibKeyId, smibKeyName);
 
     size_t writtenByteCount = 0;
 
@@ -192,8 +196,8 @@ int main(int argc, char **argv) {
         &writtenByteCount);
     if (status != PSA_SUCCESS) {
         printf(
-            "Failed to get the public key for a key with ID %d. Status = %d\n",
-            hostKeyId,
+            "Failed to get the public key for the %s Key. Status = %d\n",
+            hostKeyName,
             status);
         goto CLEAN_UP;
     }
@@ -206,8 +210,8 @@ int main(int argc, char **argv) {
         &writtenByteCount);
     if (status != PSA_SUCCESS) {
         printf(
-            "Failed to get the public key for a key with ID %d. Status = %d\n",
-            smibKeyId,
+            "Failed to get the public key for the %s Key. Status = %d\n",
+            smibKeyName,
             status);
         goto CLEAN_UP;
     }
@@ -222,9 +226,8 @@ int main(int argc, char **argv) {
         &writtenByteCount);
     if (status != PSA_SUCCESS) {
         printf(
-            "Failed to create the shared secret for a key with ID %d. Status = "
-            "%d\n",
-            hostKeyId,
+            "Failed to create the shared secret for the %s Key. Status = %d\n",
+            hostKeyName,
             status);
         goto CLEAN_UP;
     }
@@ -242,9 +245,8 @@ int main(int argc, char **argv) {
         &writtenByteCount);
     if (status != PSA_SUCCESS) {
         printf(
-            "Failed to create the shared secret for a key with ID %d. Status = "
-            "%d\n",
-            smibKeyId,
+            "Failed to create the shared secret for the %s Key. Status = %d\n",
+            smibKeyName,
             status);
         goto CLEAN_UP;
     }
@@ -292,31 +294,31 @@ int main(int argc, char **argv) {
         sizeof(sessionInputSalt),
         sessionInfo,
         sizeof(sessionInfo),
-        sessionKeyId,
+        &sessionKeyId,
         &sessionOutputSalt);
     if (status != PSA_SUCCESS) {
         printf(
-            "Failed to create a key with ID %d. Status = %d\n",
-            sessionKeyId,
+            "Failed to create the %s Key. Status = %d\n",
+            sessionKeyName,
             status);
         goto CLEAN_UP;
     }
 
-    CLI_PrintKey(sessionKeyId);
+    CLI_PrintKey(sessionKeyId, sessionKeyName);
 
     uint8_t mac[32] = {0};
     size_t macWrittenByteCount = 0;
     status = CLI_Sign(
         auditLogKeyId,
-        l_Plaintext,
+        (const uint8_t *) l_Plaintext,
         sizeof(l_Plaintext),
         mac,
         sizeof(mac),
         &macWrittenByteCount);
     if (status != PSA_SUCCESS) {
         printf(
-            "Failed to sign data with a key with ID %d. Status = %d\n",
-            sessionKeyId,
+            "Failed to sign data with the %s Key. Status = %d\n",
+            sessionKeyName,
             status);
         goto CLEAN_UP;
     }
@@ -331,15 +333,15 @@ int main(int argc, char **argv) {
         sessionKeyId,
         sessionOutputSalt,
         counter,
-        l_Plaintext,
+        (const uint8_t *) l_Plaintext,
         sizeof(l_Plaintext),
         authCiphertext,
         sizeof(authCiphertext),
         &authCiphertextWrittenByteCount);
     if (status != PSA_SUCCESS) {
         printf(
-            "Failed to encrypt data with a key with ID %d. Status = %d\n",
-            sessionKeyId,
+            "Failed to encrypt data with the %s Key. Status = %d\n",
+            sessionKeyName,
             status);
         goto CLEAN_UP;
     }
@@ -361,8 +363,8 @@ int main(int argc, char **argv) {
         &writtenByteCount);
     if (status != PSA_SUCCESS) {
         printf(
-            "Failed to decrypt data with a key with ID %d. Status = %d\n",
-            sessionKeyId,
+            "Failed to decrypt data with the %s Key. Status = %d\n",
+            sessionKeyName,
             status);
         goto CLEAN_UP;
     }
@@ -395,14 +397,14 @@ int CLI_InitializeMutex(mbedtls_platform_mutex_t *pMutex) {
         return MBEDTLS_ERR_THREADING_USAGE_ERROR;
     }
 
-    pMutex->handle = malloc(sizeof(mtx_t));
-    if (pMutex->handle == NULL) {
+    pMutex->data = malloc(sizeof(mtx_t));
+    if (pMutex->data == NULL) {
         return MBEDTLS_ERR_THREADING_USAGE_ERROR;
     }
 
-    if (mtx_init(pMutex->handle, mtx_plain) != thrd_success) {
-        free(pMutex->handle);
-        pMutex->handle = NULL;
+    if (mtx_init(pMutex->data, mtx_plain) != thrd_success) {
+        free(pMutex->data);
+        pMutex->data = NULL;
         return MBEDTLS_ERR_THREADING_USAGE_ERROR;
     }
 
@@ -410,20 +412,20 @@ int CLI_InitializeMutex(mbedtls_platform_mutex_t *pMutex) {
 }
 
 void CLI_DestroyMutex(mbedtls_platform_mutex_t *pMutex) {
-    if (pMutex == NULL || pMutex->handle == NULL) {
+    if (pMutex == NULL || pMutex->data == NULL) {
         return;
     }
 
-    free(pMutex->handle);
-    pMutex->handle = NULL;
+    free(pMutex->data);
+    pMutex->data = NULL;
 }
 
 int CLI_LockMutex(mbedtls_platform_mutex_t *pMutex) {
-    if (pMutex == NULL || pMutex->handle == NULL) {
+    if (pMutex == NULL || pMutex->data == NULL) {
         return MBEDTLS_ERR_THREADING_USAGE_ERROR;
     }
 
-    mtx_t *pMtx = pMutex->handle;
+    mtx_t *pMtx = pMutex->data;
     if (mtx_lock(pMtx) != thrd_success) {
         return MBEDTLS_ERR_THREADING_USAGE_ERROR;
     }
@@ -432,11 +434,11 @@ int CLI_LockMutex(mbedtls_platform_mutex_t *pMutex) {
 }
 
 int CLI_UnlockMutex(mbedtls_platform_mutex_t *pMutex) {
-    if (pMutex == NULL || pMutex->handle == NULL) {
+    if (pMutex == NULL || pMutex->data == NULL) {
         return MBEDTLS_ERR_THREADING_USAGE_ERROR;
     }
 
-    mtx_t *pMtx = pMutex->handle;
+    mtx_t *pMtx = pMutex->data;
     if (mtx_unlock(pMtx) != thrd_success) {
         return MBEDTLS_ERR_THREADING_USAGE_ERROR;
     }
@@ -456,20 +458,20 @@ void CLI_PrintBytes(const uint8_t *pBytes, const size_t byteCount) {
     printf("\n");
 }
 
-void CLI_PrintKey(const psa_key_id_t keyId) {
+void CLI_PrintKey(const psa_key_id_t keyId, const char *keyName) {
     uint8_t keyBuffer[128] = {0};
     size_t writtenByteCount = 0;
     psa_status_t status =
             psa_export_key(keyId, keyBuffer, sizeof(keyBuffer), &writtenByteCount);
     if (status != PSA_SUCCESS) {
         printf(
-            "Failed to print a key with ID %d. Status = %d\n",
-            keyId,
+            "Failed to print the %s Key. Status = %d\n",
+            keyName,
             status);
         return;
     }
 
-    printf("Key with ID %d = 0x", keyId);
+    printf("%s Key = 0x", keyName);
     for (size_t i = 0; i < writtenByteCount; i++) {
         printf("%02x", keyBuffer[i]);
     }
@@ -477,12 +479,10 @@ void CLI_PrintKey(const psa_key_id_t keyId) {
 }
 
 psa_status_t CLI_CreateHmacKey(
-    const psa_key_id_t keyId,
     const uint8_t *pKey,
-    const size_t keyByteCount) {
+    const size_t keyByteCount,
+    psa_key_id_t *keyId) {
     psa_key_attributes_t keyAttributes = PSA_KEY_ATTRIBUTES_INIT;
-    psa_set_key_id(&keyAttributes, keyId);
-    psa_set_key_lifetime(&keyAttributes, PSA_KEY_LIFETIME_PERSISTENT);
     psa_set_key_type(&keyAttributes, PSA_KEY_TYPE_HMAC);
     psa_set_key_bits(&keyAttributes, 256);
     psa_set_key_usage_flags(
@@ -490,17 +490,14 @@ psa_status_t CLI_CreateHmacKey(
         PSA_KEY_USAGE_EXPORT | PSA_KEY_USAGE_SIGN_MESSAGE);
     psa_set_key_algorithm(&keyAttributes, PSA_ALG_HMAC(PSA_ALG_SHA_256));
 
-    psa_key_id_t generatedKeyId = 0;
-    return psa_import_key(&keyAttributes, pKey, keyByteCount, &generatedKeyId);
+    return psa_import_key(&keyAttributes, pKey, keyByteCount, keyId);
 }
 
 psa_status_t CLI_CreateDerivationKey(
-    const psa_key_id_t keyId,
     const uint8_t *pKey,
-    const size_t keyByteCount) {
+    const size_t keyByteCount,
+    psa_key_id_t *keyId) {
     psa_key_attributes_t keyAttributes = PSA_KEY_ATTRIBUTES_INIT;
-    psa_set_key_id(&keyAttributes, keyId);
-    psa_set_key_lifetime(&keyAttributes, PSA_KEY_LIFETIME_PERSISTENT);
     psa_set_key_type(&keyAttributes, PSA_KEY_TYPE_DERIVE);
     psa_set_key_bits(&keyAttributes, keyByteCount * 8);
     psa_set_key_usage_flags(
@@ -508,14 +505,11 @@ psa_status_t CLI_CreateDerivationKey(
         PSA_KEY_USAGE_EXPORT | PSA_KEY_USAGE_DERIVE);
     psa_set_key_algorithm(&keyAttributes, PSA_ALG_HKDF(PSA_ALG_SHA_256));
 
-    psa_key_id_t generatedKeyId = 0;
-    return psa_import_key(&keyAttributes, pKey, keyByteCount, &generatedKeyId);
+    return psa_import_key(&keyAttributes, pKey, keyByteCount, keyId);
 }
 
-psa_status_t CLI_CreateEccPrivateKey(const psa_key_id_t keyId) {
+psa_status_t CLI_CreateEccPrivateKey(psa_key_id_t *keyId) {
     psa_key_attributes_t keyAttributes = PSA_KEY_ATTRIBUTES_INIT;
-    psa_set_key_id(&keyAttributes, keyId);
-    psa_set_key_lifetime(&keyAttributes, PSA_KEY_LIFETIME_PERSISTENT);
     psa_set_key_type(
         &keyAttributes,
         PSA_KEY_TYPE_ECC_KEY_PAIR(PSA_ECC_FAMILY_SECP_R1));
@@ -525,8 +519,7 @@ psa_status_t CLI_CreateEccPrivateKey(const psa_key_id_t keyId) {
         PSA_KEY_USAGE_EXPORT | PSA_KEY_USAGE_DERIVE);
     psa_set_key_algorithm(&keyAttributes, PSA_ALG_ECDH);
 
-    psa_key_id_t generatedKeyId = 0;
-    return psa_generate_key(&keyAttributes, &generatedKeyId);
+    return psa_generate_key(&keyAttributes, keyId);
 }
 
 psa_status_t CLI_GetPublicKey(
@@ -574,9 +567,9 @@ psa_status_t CLI_CreateSessionKeyAndSalt(
     const size_t inputSaltByteCount,
     const uint8_t *pInfo,
     const size_t infoByteCount,
-    const psa_key_id_t sessionKeyId,
+    psa_key_id_t *sessionKeyId,
     uint64_t *pOutputSalt) {
-    if (pOutputSalt == NULL) {
+    if (sessionKeyId == NULL || pOutputSalt == NULL) {
         return PSA_ERROR_INVALID_ARGUMENT;
     }
 
@@ -703,8 +696,6 @@ psa_status_t CLI_CreateSessionKeyAndSalt(
     (void) psa_destroy_key(generatedKeyId);
 
     psa_key_attributes_t sessionKeyAttributes = PSA_KEY_ATTRIBUTES_INIT;
-    psa_set_key_id(&sessionKeyAttributes, sessionKeyId);
-    psa_set_key_lifetime(&sessionKeyAttributes, PSA_KEY_LIFETIME_PERSISTENT);
     psa_set_key_type(&sessionKeyAttributes, PSA_KEY_TYPE_AES);
     psa_set_key_bits(&sessionKeyAttributes, 256);
     psa_set_key_usage_flags(
@@ -722,6 +713,7 @@ psa_status_t CLI_CreateSessionKeyAndSalt(
         goto CLEAN_UP;
     }
 
+    *sessionKeyId = generatedKeyId;
     generatedKeyId = 0;
 
     (void) memcpy_s(pOutputSalt, sizeof(uint64_t), okm + 32, 8);
