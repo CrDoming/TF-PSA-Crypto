@@ -24,6 +24,7 @@ void firmware_free(void *ptr) {
 #endif
 }
 
+// The declaration is in TF-PSA-Crypto/include/mbedtls/platform.h
 int mbedtls_platform_get_entropy(
     psa_driver_get_entropy_flags_t flags,
     size_t *estimate_bits,
