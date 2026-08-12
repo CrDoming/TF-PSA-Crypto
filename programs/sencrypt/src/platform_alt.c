@@ -1,5 +1,3 @@
-#include "platform_alt.h"
-
 #include "mbedtls/platform.h"
 
 #ifdef _MSC_VER
@@ -7,22 +5,6 @@
 #include "stdlib.h"
 #include "time.h"
 #endif
-
-void *firmware_calloc(size_t n, size_t size) {
-#ifdef _MSC_VER
-    return calloc(n, size);
-#else
-    // TODO: Add logic.
-#endif
-}
-
-void firmware_free(void *ptr) {
-#ifdef _MSC_VER
-    free(ptr);
-#else
-    // TODO: Add logic.
-#endif
-}
 
 // The declaration is in TF-PSA-Crypto/include/mbedtls/platform.h
 int mbedtls_platform_get_entropy(

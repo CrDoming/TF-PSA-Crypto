@@ -470,13 +470,13 @@
 #define MBEDTLS_THREADING_C
 
 /* Memory buffer allocator options */
-//#define MBEDTLS_MEMORY_ALIGN_MULTIPLE      4 /**< Align on multiples of this value */
+#define MBEDTLS_MEMORY_ALIGN_MULTIPLE      4 /**< Align on multiples of this value */
 
 /* To use the following function macros, MBEDTLS_PLATFORM_C must be enabled. */
 /* MBEDTLS_PLATFORM_XXX_MACRO and MBEDTLS_PLATFORM_XXX_ALT cannot both be defined */
-#define MBEDTLS_PLATFORM_CALLOC_MACRO        firmware_calloc /**< Default allocator macro to use, can be undefined. See MBEDTLS_PLATFORM_STD_CALLOC for requirements. */
+//#define MBEDTLS_PLATFORM_CALLOC_MACRO        calloc /**< Default allocator macro to use, can be undefined. See MBEDTLS_PLATFORM_STD_CALLOC for requirements. */
 //#define MBEDTLS_PLATFORM_EXIT_MACRO            exit /**< Default exit macro to use, can be undefined */
-#define MBEDTLS_PLATFORM_FREE_MACRO            firmware_free /**< Default free macro to use, can be undefined. See MBEDTLS_PLATFORM_STD_FREE for requirements. */
+//#define MBEDTLS_PLATFORM_FREE_MACRO            free /**< Default free macro to use, can be undefined. See MBEDTLS_PLATFORM_STD_FREE for requirements. */
 //#define MBEDTLS_PLATFORM_FPRINTF_MACRO      fprintf /**< Default fprintf macro to use, can be undefined */
 //#define MBEDTLS_PLATFORM_MS_TIME_TYPE_MACRO   int64_t /**< Default milliseconds time macro to use, can be undefined. MBEDTLS_HAVE_TIME must be enabled. It must be signed, and at least 64 bits. If it is changed from the default, MBEDTLS_PRINTF_MS_TIME must be updated to match.*/
 //#define MBEDTLS_PLATFORM_NV_SEED_READ_MACRO   mbedtls_platform_std_nv_seed_read /**< Default nv_seed_read function to use, can be undefined */
@@ -514,7 +514,7 @@
  */
 //#define MBEDTLS_PLATFORM_STD_FREE            free
 
-#define MBEDTLS_PLATFORM_STD_MEM_HDR   "platform_alt.h" /**< Header to include if MBEDTLS_PLATFORM_NO_STD_FUNCTIONS is defined. Don't define if no header is needed. */
+//#define MBEDTLS_PLATFORM_STD_MEM_HDR   <stdlib.h> /**< Header to include if MBEDTLS_PLATFORM_NO_STD_FUNCTIONS is defined. Don't define if no header is needed. */
 //#define MBEDTLS_PLATFORM_STD_NV_SEED_FILE  "seedfile" /**< Seed file to read/write with default implementation */
 //#define MBEDTLS_PLATFORM_STD_NV_SEED_READ   mbedtls_platform_std_nv_seed_read /**< Default nv_seed_read function to use, can be undefined */
 //#define MBEDTLS_PLATFORM_STD_NV_SEED_WRITE  mbedtls_platform_std_nv_seed_write /**< Default nv_seed_write function to use, can be undefined */
@@ -1308,7 +1308,7 @@
  * Module:  core/psa_crypto.c
  * Requires: MBEDTLS_PSA_CRYPTO_C
  */
-#define MBEDTLS_PSA_KEY_STORE_DYNAMIC
+// #define MBEDTLS_PSA_KEY_STORE_DYNAMIC
 
 /**
  * \def MBEDTLS_PSA_STATIC_KEY_SLOTS
@@ -1328,7 +1328,7 @@
  * Requires: MBEDTLS_PSA_CRYPTO_C
  *
  */
-//#define MBEDTLS_PSA_STATIC_KEY_SLOTS
+#define MBEDTLS_PSA_STATIC_KEY_SLOTS
 
 /* Entropy options */
 
@@ -1410,7 +1410,7 @@
  * in order to store larger objects (ex: raw keys), but please note that this
  * will increase RAM usage.
  */
-//#define MBEDTLS_PSA_STATIC_KEY_SLOT_BUFFER_SIZE       256
+#define MBEDTLS_PSA_STATIC_KEY_SLOT_BUFFER_SIZE       32
 
 /**
  * \def MBEDTLS_PSA_CRYPTO_RNG_STRENGTH

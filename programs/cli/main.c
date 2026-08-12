@@ -100,8 +100,46 @@ psa_status_t CLI_Decrypt(
     size_t plaintextByteSize,
     size_t *pPlaintextWrittenByteCount);
 
+// TODO: Redefine.
+static size_t l_MaxBlockSize = 0;
+static size_t l_TotalSize = 0;
+
+typedef struct {
+    size_t size;
+    uint8_t* ptr;
+} memory_block_t;
+
+void* CLI_Calloc(size_t n, size_t size) {
+    size_t len = n * size;
+    if (len > l_MaxBlockSize) {
+        l_MaxBlockSize = len;
+    }
+
+    l_TotalSize += len;
+
+    memory_block_t* block = malloc(sizeof(memory_block_t) + len);
+    if (block == NULL) {
+        return NULL;
+    }
+
+    block->size = len;
+    block->ptr = (uint8_t*)block + sizeof(size_t);
+    return block->ptr;
+}
+
+void CLI_Free(void* ptr) {
+    if (ptr == NULL) {
+        return;
+    }
+
+    memory_block_t* block = (memory_block_t*)((uint8_t*)ptr - sizeof(size_t));
+    l_TotalSize -= block->size;
+    free(block);
+}
+
 int main(int argc, char **argv) {
     int exitCode = 1;
+    uint8_t memory_buffer[7000];
     psa_key_id_t auditLogKeyId = 0;
     char auditLogKeyName[] = "Audit Log";
     psa_key_id_t masterDerivationKeyId = 0;
@@ -130,6 +168,10 @@ int main(int argc, char **argv) {
         NULL,
         NULL,
         NULL);
+
+    mbedtls_platform_set_calloc_free(
+        CLI_Calloc,
+        CLI_Free);
 
     psa_status_t status = psa_crypto_init();
     if (status != PSA_SUCCESS) {
@@ -305,6 +347,7 @@ int main(int argc, char **argv) {
     }
 
     CLI_PrintKey(sessionKeyId, sessionKeyName);
+    printf("Session Output Salt = 0x%016llx\n", sessionOutputSalt);
 
     uint8_t mac[32] = {0};
     size_t macWrittenByteCount = 0;

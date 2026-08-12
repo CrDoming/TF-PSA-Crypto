@@ -1,5 +1,6 @@
 LIBRARY sencrypt
 EXPORTS
+    mbedtls_platform_set_calloc_free
     mbedtls_psa_crypto_free
     mbedtls_threading_set_alt
     mbedtls_threading_free_alt
