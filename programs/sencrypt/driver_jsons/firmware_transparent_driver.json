@@ -12,7 +12,9 @@
         "generate_key",
         "import_key",
         "export_public_key",
-        "mac_compute",
+        "hash_setup",
+        "hash_update",
+        "hash_finish",
         "aead_encrypt",
         "aead_decrypt",
         "key_agreement"

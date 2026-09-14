@@ -62,28 +62,22 @@ psa_status_t firmware_transparent_export_public_key(
     size_t *data_length);
 
 /**
- * @brief Computes the message authentication code (MAC) of a message.
- * @param[in] attributes The attributes of the key to use.
- * @param[in] key_buffer The buffer containing the key material.
- * @param[in] key_buffer_size The size of @code key_buffer@endcode in bytes.
- * @param[in] alg The MAC algorithm to use.
+ * @brief Computes the hash of a message.
+ * @param[in] alg The hash algorithm to use.
  * @param[in] input The input message.
  * @param[in] input_length The count of bytes to read from @code input@endcode.
- * @param[out] mac The buffer to receive the MAC.
- * @param[in] mac_size The size of @code mac@endcode in bytes.
- * @param[out] mac_length The count of bytes written to @code mac@endcode.
+ * @param[out] hash The buffer to receive the hash.
+ * @param[in] hash_size The size of @code hash@endcode in bytes.
+ * @param[out] hash_length The count of bytes written to @code hash@endcode.
  * @return PSA_SUCCESS on success; otherwise, a different value.
  */
-psa_status_t firmware_transparent_mac_compute(
-    const psa_key_attributes_t *attributes,
-    const uint8_t *key_buffer,
-    size_t key_buffer_size,
+psa_status_t firmware_transparent_hash_compute(
     psa_algorithm_t alg,
     const uint8_t *input,
     size_t input_length,
-    uint8_t *mac,
-    size_t mac_size,
-    size_t *mac_length);
+    uint8_t *hash,
+    size_t hash_size,
+    size_t *hash_length);
 
 /**
  * @brief Encrypts a message via authenticated encryption with associated data (AEAD).

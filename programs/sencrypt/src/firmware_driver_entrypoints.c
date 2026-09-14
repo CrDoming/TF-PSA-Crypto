@@ -104,43 +104,31 @@ psa_status_t firmware_transparent_export_public_key(
     return PSA_SUCCESS;
 }
 
-psa_status_t firmware_transparent_mac_compute(
-    const psa_key_attributes_t *attributes,
-    const uint8_t *key_buffer,
-    size_t key_buffer_size,
+psa_status_t firmware_transparent_hash_compute(
     psa_algorithm_t alg,
     const uint8_t *input,
     size_t input_length,
-    uint8_t *mac,
-    size_t mac_size,
-    size_t *mac_length) {
-    if (attributes == NULL || key_buffer == NULL || key_buffer_size <= 0 ||
-        input == NULL || input_length <= 0 || mac == NULL ||
-        mac_length == NULL) {
+    uint8_t *hash,
+    size_t hash_size,
+    size_t *hash_length) {
+    if (input == NULL ||
+        input_length < 1 ||
+        hash == NULL ||
+        hash_length == NULL) {
         return PSA_ERROR_INVALID_ARGUMENT;
     }
 
-    const psa_key_type_t key_type = psa_get_key_type(attributes);
-    if (key_type != PSA_KEY_TYPE_HMAC) {
+    if (alg != PSA_ALG_SHA_256) {
         return PSA_ERROR_NOT_SUPPORTED;
     }
 
-    const psa_key_usage_t key_usage = psa_get_key_usage_flags(attributes);
-    if ((key_usage & PSA_KEY_USAGE_SIGN_MESSAGE) == 0) {
-        return PSA_ERROR_NOT_PERMITTED;
-    }
-
-    if (alg != PSA_ALG_HMAC(PSA_ALG_SHA_256)) {
-        return PSA_ERROR_NOT_SUPPORTED;
-    }
-
-    if (mac_size < 32) {
+    if (hash_size < 32) {
         return PSA_ERROR_BUFFER_TOO_SMALL;
     }
 
     // TODO: Add logic.
 
-    *mac_length = 32;
+    *hash_length = 32;
 
     return PSA_SUCCESS;
 }

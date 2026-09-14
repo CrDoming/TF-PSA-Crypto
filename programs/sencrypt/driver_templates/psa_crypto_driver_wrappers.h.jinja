@@ -1824,7 +1824,22 @@ static inline psa_status_t psa_driver_wrapper_hash_compute(
     size_t hash_size,
     size_t *hash_length)
 {
+{% with entry_point = "hash_compute" -%}
+{% macro entry_point_param(driver) -%}
+alg,
+input,
+input_length,
+hash,
+hash_size,
+hash_length
+{% endmacro %}
     psa_status_t status = PSA_ERROR_CORRUPTION_DETECTED;
+
+#if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
+{% with nest_indent=12 %}
+{% include "OS-template-transparent.jinja" -%}
+{% endwith -%}
+#endif /* PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT */
 
     /* Try accelerators first */
 #if defined(PSA_CRYPTO_DRIVER_TEST)
@@ -1850,13 +1865,25 @@ static inline psa_status_t psa_driver_wrapper_hash_compute(
     (void) hash_length;
 
     return( PSA_ERROR_NOT_SUPPORTED );
+{% endwith -%}
 }
 
 static inline psa_status_t psa_driver_wrapper_hash_setup(
     psa_hash_operation_t *operation,
     psa_algorithm_t alg )
 {
+{% with entry_point = "hash_setup" -%}
+{% macro entry_point_param(driver) -%}
+operation,
+alg
+{% endmacro %}
     psa_status_t status = PSA_ERROR_CORRUPTION_DETECTED;
+
+#if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
+{% with nest_indent=12 %}
+{% include "OS-template-transparent.jinja" -%}
+{% endwith -%}
+#endif /* PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT */
 
     /* Try setup on accelerators first */
 #if defined(PSA_CRYPTO_DRIVER_TEST)
@@ -1883,6 +1910,7 @@ static inline psa_status_t psa_driver_wrapper_hash_setup(
     (void) operation;
     (void) alg;
     return( PSA_ERROR_NOT_SUPPORTED );
+{% endwith -%}
 }
 
 static inline psa_status_t psa_driver_wrapper_hash_clone(
@@ -1915,6 +1943,19 @@ static inline psa_status_t psa_driver_wrapper_hash_update(
     const uint8_t *input,
     size_t input_length )
 {
+{% with entry_point = "hash_update" -%}
+{% macro entry_point_param(driver) -%}
+operation,
+input,
+input_length
+{% endmacro %}
+
+#if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
+{% with nest_indent=12 %}
+{% include "OS-template-transparent.jinja" -%}
+{% endwith -%}
+#endif /* PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT */
+
     switch( operation->id )
     {
 #if defined(MBEDTLS_PSA_BUILTIN_HASH)
@@ -1933,6 +1974,7 @@ static inline psa_status_t psa_driver_wrapper_hash_update(
             (void) input_length;
             return( PSA_ERROR_BAD_STATE );
     }
+{% endwith -%}
 }
 
 static inline psa_status_t psa_driver_wrapper_hash_finish(
@@ -1941,6 +1983,20 @@ static inline psa_status_t psa_driver_wrapper_hash_finish(
     size_t hash_size,
     size_t *hash_length )
 {
+{% with entry_point = "hash_finish" -%}
+{% macro entry_point_param(driver) -%}
+operation,
+hash,
+hash_size,
+hash_length
+{% endmacro %}
+
+#if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
+{% with nest_indent=12 %}
+{% include "OS-template-transparent.jinja" -%}
+{% endwith -%}
+#endif /* PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT */
+
     switch( operation->id )
     {
 #if defined(MBEDTLS_PSA_BUILTIN_HASH)
@@ -1960,6 +2016,7 @@ static inline psa_status_t psa_driver_wrapper_hash_finish(
             (void) hash_length;
             return( PSA_ERROR_BAD_STATE );
     }
+{% endwith -%}
 }
 
 static inline psa_status_t psa_driver_wrapper_hash_abort(

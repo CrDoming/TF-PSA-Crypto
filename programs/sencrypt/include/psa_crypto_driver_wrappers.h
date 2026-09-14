@@ -1801,7 +1801,14 @@ static inline psa_status_t psa_driver_wrapper_hash_compute(
     size_t hash_size,
     size_t *hash_length)
 {
+
     psa_status_t status = PSA_ERROR_CORRUPTION_DETECTED;
+
+#if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
+
+
+
+#endif /* PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT */
 
     /* Try accelerators first */
 #if defined(PSA_CRYPTO_DRIVER_TEST)
@@ -1833,7 +1840,23 @@ static inline psa_status_t psa_driver_wrapper_hash_setup(
     psa_hash_operation_t *operation,
     psa_algorithm_t alg )
 {
+
     psa_status_t status = PSA_ERROR_CORRUPTION_DETECTED;
+
+#if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
+
+#if (defined(FIRMWARE_DRIVER_ENABLED) )
+            status = firmware_transparent_hash_setup
+                (operation,
+                                alg
+            );
+
+            if( status != PSA_ERROR_NOT_SUPPORTED )
+                return( status );
+#endif
+
+
+#endif /* PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT */
 
     /* Try setup on accelerators first */
 #if defined(PSA_CRYPTO_DRIVER_TEST)
@@ -1892,6 +1915,24 @@ static inline psa_status_t psa_driver_wrapper_hash_update(
     const uint8_t *input,
     size_t input_length )
 {
+
+
+#if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
+
+#if (defined(FIRMWARE_DRIVER_ENABLED) )
+            status = firmware_transparent_hash_update
+                (operation,
+                                input,
+                                input_length
+            );
+
+            if( status != PSA_ERROR_NOT_SUPPORTED )
+                return( status );
+#endif
+
+
+#endif /* PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT */
+
     switch( operation->id )
     {
 #if defined(MBEDTLS_PSA_BUILTIN_HASH)
@@ -1918,6 +1959,25 @@ static inline psa_status_t psa_driver_wrapper_hash_finish(
     size_t hash_size,
     size_t *hash_length )
 {
+
+
+#if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
+
+#if (defined(FIRMWARE_DRIVER_ENABLED) )
+            status = firmware_transparent_hash_finish
+                (operation,
+                                hash,
+                                hash_size,
+                                hash_length
+            );
+
+            if( status != PSA_ERROR_NOT_SUPPORTED )
+                return( status );
+#endif
+
+
+#endif /* PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT */
+
     switch( operation->id )
     {
 #if defined(MBEDTLS_PSA_BUILTIN_HASH)
@@ -2652,22 +2712,6 @@ static inline psa_status_t psa_driver_wrapper_mac_compute(
              * cycle through all known transparent accelerators */
 #if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
 
-#if (defined(FIRMWARE_DRIVER_ENABLED) )
-            status = firmware_transparent_mac_compute
-                (attributes,
-                                key_buffer,
-                                key_buffer_size,
-                                alg,
-                                input,
-                                input_length,
-                                mac,
-                                mac_size,
-                                mac_length
-            );
-
-            if( status != PSA_ERROR_NOT_SUPPORTED )
-                return( status );
-#endif
 
 
 #endif /* PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT */
