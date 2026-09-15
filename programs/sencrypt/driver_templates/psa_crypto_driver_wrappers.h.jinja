@@ -1949,6 +1949,7 @@ operation,
 input,
 input_length
 {% endmacro %}
+    psa_status_t status = PSA_ERROR_CORRUPTION_DETECTED;
 
 #if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
 {% with nest_indent=12 %}
@@ -1990,6 +1991,7 @@ hash,
 hash_size,
 hash_length
 {% endmacro %}
+    psa_status_t status = PSA_ERROR_CORRUPTION_DETECTED;
 
 #if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
 {% with nest_indent=12 %}

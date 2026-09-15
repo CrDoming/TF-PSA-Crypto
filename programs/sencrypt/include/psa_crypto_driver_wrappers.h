@@ -1916,6 +1916,7 @@ static inline psa_status_t psa_driver_wrapper_hash_update(
     size_t input_length )
 {
 
+    psa_status_t status = PSA_ERROR_CORRUPTION_DETECTED;
 
 #if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
 
@@ -1960,6 +1961,7 @@ static inline psa_status_t psa_driver_wrapper_hash_finish(
     size_t *hash_length )
 {
 
+    psa_status_t status = PSA_ERROR_CORRUPTION_DETECTED;
 
 #if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
 

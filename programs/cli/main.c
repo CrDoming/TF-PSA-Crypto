@@ -625,7 +625,7 @@ psa_status_t CLI_CreateSessionKeyAndSalt(const uint8_t* pPrivateKey,
                              sizeof(prk),
                              &writtenByteCount);
     if (status != PSA_SUCCESS) {
-        printf("Failed to compute a MAC for the extract phrase. Status = %d",
+        printf("Failed to compute a MAC for the extract phrase. Status = %d\n",
                status);
         goto CLEAN_UP;
     }

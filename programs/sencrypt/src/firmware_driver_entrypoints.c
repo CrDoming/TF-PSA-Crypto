@@ -4,10 +4,10 @@
 #include "string.h"
 
 psa_status_t firmware_transparent_generate_key(
-    const psa_key_attributes_t *attributes,
-    uint8_t *key_buffer,
+    const psa_key_attributes_t* attributes,
+    uint8_t* key_buffer,
     size_t key_buffer_size,
-    size_t *key_buffer_length) {
+    size_t* key_buffer_length) {
     if (attributes == NULL || key_buffer == NULL || key_buffer_length == NULL) {
         return PSA_ERROR_INVALID_ARGUMENT;
     }
@@ -34,13 +34,13 @@ psa_status_t firmware_transparent_generate_key(
 }
 
 psa_status_t firmware_transparent_import_key(
-    const psa_key_attributes_t *attributes,
-    const uint8_t *data,
+    const psa_key_attributes_t* attributes,
+    const uint8_t* data,
     size_t data_length,
-    uint8_t *key_buffer,
+    uint8_t* key_buffer,
     size_t key_buffer_size,
-    size_t *key_buffer_length,
-    size_t *bits) {
+    size_t* key_buffer_length,
+    size_t* bits) {
     if (attributes == NULL || data == NULL || key_buffer == NULL ||
         key_buffer_length == NULL || bits == NULL) {
         return PSA_ERROR_INVALID_ARGUMENT;
@@ -65,19 +65,19 @@ psa_status_t firmware_transparent_import_key(
         return PSA_ERROR_BUFFER_TOO_SMALL;
     }
 
-    (void) memcpy(key_buffer, data, data_length);
+    (void)memcpy(key_buffer, data, data_length);
     *key_buffer_length = data_length;
 
     return PSA_SUCCESS;
 }
 
 psa_status_t firmware_transparent_export_public_key(
-    const psa_key_attributes_t *attributes,
-    const uint8_t *key_buffer,
+    const psa_key_attributes_t* attributes,
+    const uint8_t* key_buffer,
     size_t key_buffer_size,
-    uint8_t *data,
+    uint8_t* data,
     size_t data_size,
-    size_t *data_length) {
+    size_t* data_length) {
     if (attributes == NULL || key_buffer == NULL || data == NULL ||
         data_length == NULL) {
         return PSA_ERROR_INVALID_ARGUMENT;
@@ -104,17 +104,9 @@ psa_status_t firmware_transparent_export_public_key(
     return PSA_SUCCESS;
 }
 
-psa_status_t firmware_transparent_hash_compute(
-    psa_algorithm_t alg,
-    const uint8_t *input,
-    size_t input_length,
-    uint8_t *hash,
-    size_t hash_size,
-    size_t *hash_length) {
-    if (input == NULL ||
-        input_length < 1 ||
-        hash == NULL ||
-        hash_length == NULL) {
+psa_status_t firmware_transparent_hash_setup(psa_hash_operation_t* operation,
+                                             psa_algorithm_t alg) {
+    if (operation == NULL) {
         return PSA_ERROR_INVALID_ARGUMENT;
     }
 
@@ -122,35 +114,83 @@ psa_status_t firmware_transparent_hash_compute(
         return PSA_ERROR_NOT_SUPPORTED;
     }
 
+    // TODO: Use a MACRO.
+    operation->private_id = 2;
+    operation->private_ctx.mbedtls_ctx.private_alg = alg;
+
+    mbedtls_sha256_context* ctx =
+        &operation->private_ctx.mbedtls_ctx.private_ctx.sha256;
+    (void)memset(ctx, 0, sizeof(mbedtls_sha256_context));
+
+    // TODO: Add logic.
+
+    return PSA_SUCCESS;
+}
+
+psa_status_t firmware_transparent_hash_update(psa_hash_operation_t* operation,
+                                              const uint8_t* input,
+                                              size_t input_length) {
+    if (operation == NULL || input == NULL) {
+        return PSA_ERROR_INVALID_ARGUMENT;
+    }
+
+    if (operation->private_ctx.mbedtls_ctx.private_alg != PSA_ALG_SHA_256) {
+        return PSA_ERROR_NOT_SUPPORTED;
+    }
+
+    if (input_length == 0) {
+        return PSA_SUCCESS;
+    }
+
+    mbedtls_sha256_context* ctx =
+        &operation->private_ctx.mbedtls_ctx.private_ctx.sha256;
+
+    // TODO: Add logic.
+
+    return PSA_SUCCESS;
+}
+
+psa_status_t firmware_transparent_hash_finish(psa_hash_operation_t* operation,
+                                              uint8_t* hash,
+                                              size_t hash_size,
+                                              size_t* hash_length) {
+    if (operation == NULL || hash == NULL || hash_length == NULL) {
+        return PSA_ERROR_INVALID_ARGUMENT;
+    }
+
+    if (operation->private_ctx.mbedtls_ctx.private_alg != PSA_ALG_SHA_256) {
+        return PSA_ERROR_NOT_SUPPORTED;
+    }
+
     if (hash_size < 32) {
         return PSA_ERROR_BUFFER_TOO_SMALL;
     }
 
-    // TODO: Add logic.
+    mbedtls_sha256_context* ctx =
+        &operation->private_ctx.mbedtls_ctx.private_ctx.sha256;
 
-    *hash_length = 32;
+    // TODO: Add logic.
 
     return PSA_SUCCESS;
 }
 
 psa_status_t firmware_transparent_aead_encrypt(
-    const psa_key_attributes_t *attributes,
-    const uint8_t *key_buffer,
+    const psa_key_attributes_t* attributes,
+    const uint8_t* key_buffer,
     size_t key_buffer_size,
     psa_algorithm_t alg,
-    const uint8_t *nonce,
+    const uint8_t* nonce,
     size_t nonce_length,
-    const uint8_t *additional_data,
+    const uint8_t* additional_data,
     size_t additional_data_length,
-    const uint8_t *plaintext,
+    const uint8_t* plaintext,
     size_t plaintext_length,
-    uint8_t *ciphertext,
+    uint8_t* ciphertext,
     size_t ciphertext_size,
-    size_t *ciphertext_length) {
+    size_t* ciphertext_length) {
     if (attributes == NULL || key_buffer == NULL || nonce == NULL ||
         nonce_length < 7 || nonce_length > 13 || plaintext == NULL ||
-        plaintext_length <= 0 || ciphertext == NULL ||
-        ciphertext_length == NULL) {
+        ciphertext == NULL || ciphertext_length == NULL) {
         return PSA_ERROR_INVALID_ARGUMENT;
     }
 
@@ -172,6 +212,10 @@ psa_status_t firmware_transparent_aead_encrypt(
         return PSA_ERROR_NOT_SUPPORTED;
     }
 
+    if (plaintext_length == 0) {
+        return PSA_SUCCESS;
+    }
+
     if (ciphertext_size < plaintext_length + 8) {
         return PSA_ERROR_BUFFER_TOO_SMALL;
     }
@@ -184,23 +228,22 @@ psa_status_t firmware_transparent_aead_encrypt(
 }
 
 psa_status_t firmware_transparent_aead_decrypt(
-    const psa_key_attributes_t *attributes,
-    const uint8_t *key_buffer,
+    const psa_key_attributes_t* attributes,
+    const uint8_t* key_buffer,
     size_t key_buffer_size,
     psa_algorithm_t alg,
-    const uint8_t *nonce,
+    const uint8_t* nonce,
     size_t nonce_length,
-    const uint8_t *additional_data,
+    const uint8_t* additional_data,
     size_t additional_data_length,
-    const uint8_t *ciphertext,
+    const uint8_t* ciphertext,
     size_t ciphertext_length,
-    uint8_t *plaintext,
+    uint8_t* plaintext,
     size_t plaintext_size,
-    size_t *plaintext_length) {
+    size_t* plaintext_length) {
     if (attributes == NULL || key_buffer == NULL || nonce == NULL ||
         nonce_length < 7 || nonce_length > 13 || ciphertext == NULL ||
-        ciphertext_length <= 0 || plaintext == NULL ||
-        plaintext_length == NULL) {
+        plaintext == NULL || plaintext_length == NULL) {
         return PSA_ERROR_INVALID_ARGUMENT;
     }
 
@@ -222,6 +265,14 @@ psa_status_t firmware_transparent_aead_decrypt(
         return PSA_ERROR_NOT_SUPPORTED;
     }
 
+    if (ciphertext_length == 0) {
+        return PSA_SUCCESS;
+    }
+
+    if (ciphertext_length < 8) {
+        return PSA_ERROR_INVALID_ARGUMENT;
+    }
+
     if (plaintext_size < ciphertext_length - 8) {
         return PSA_ERROR_BUFFER_TOO_SMALL;
     }
@@ -234,15 +285,15 @@ psa_status_t firmware_transparent_aead_decrypt(
 }
 
 psa_status_t firmware_transparent_key_agreement(
-    const psa_key_attributes_t *attributes,
-    const uint8_t *key_buffer,
+    const psa_key_attributes_t* attributes,
+    const uint8_t* key_buffer,
     size_t key_buffer_size,
     psa_algorithm_t alg,
-    const uint8_t *peer_key,
+    const uint8_t* peer_key,
     size_t peer_key_length,
-    uint8_t *shared_secret,
+    uint8_t* shared_secret,
     size_t shared_secret_size,
-    size_t *shared_secret_length) {
+    size_t* shared_secret_length) {
     if (attributes == NULL || key_buffer == NULL || peer_key == NULL ||
         shared_secret == NULL || shared_secret_length == NULL) {
         return PSA_ERROR_INVALID_ARGUMENT;
