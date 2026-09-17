@@ -174,6 +174,13 @@ psa_status_t firmware_transparent_aead_decrypt(
     size_t plaintext_size,
     size_t* plaintext_length);
 
+psa_status_t firmware_transparent_aead_encrypt_setup(
+    psa_aead_operation_t* operation,
+    const psa_key_attributes_t* attributes,
+    const uint8_t* key_buffer,
+    size_t key_buffer_size,
+    psa_algorithm_t alg);
+
 /**
  * @brief Performs a key agreement operation to derive a shared secret.
  * @param[in] attributes The attributes of the key to use.

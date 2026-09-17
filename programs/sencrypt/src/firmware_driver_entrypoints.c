@@ -225,7 +225,7 @@ psa_status_t firmware_transparent_aead_encrypt(
 
     *ciphertext_length = plaintext_length + 8;
 
-    return PSA_SUCCESS;
+    return PSA_ERROR_NOT_SUPPORTED;
 }
 
 psa_status_t firmware_transparent_aead_decrypt(
@@ -282,7 +282,16 @@ psa_status_t firmware_transparent_aead_decrypt(
 
     *plaintext_length = ciphertext_length - 8;
 
-    return PSA_SUCCESS;
+    return PSA_ERROR_NOT_SUPPORTED;
+}
+
+psa_status_t firmware_transparent_aead_encrypt_setup(
+    psa_aead_operation_t* operation,
+    const psa_key_attributes_t* attributes,
+    const uint8_t* key_buffer,
+    size_t key_buffer_size,
+    psa_algorithm_t alg) {
+    return PSA_ERROR_NOT_SUPPORTED;
 }
 
 psa_status_t firmware_transparent_key_agreement(

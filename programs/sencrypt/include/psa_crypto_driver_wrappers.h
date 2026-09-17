@@ -2167,29 +2167,8 @@ static inline psa_status_t psa_driver_wrapper_aead_encrypt(
         case PSA_KEY_LOCATION_LOCAL_STORAGE:
             /* Key is stored in the slot in export representation, so
              * cycle through all known transparent accelerators */
-
 #if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
 
-#if (defined(FIRMWARE_DRIVER_ENABLED) )
-            status = firmware_transparent_aead_encrypt
-                (attributes,
-                                key_buffer,
-                                key_buffer_size,
-                                alg,
-                                nonce,
-                                nonce_length,
-                                additional_data,
-                                additional_data_length,
-                                plaintext,
-                                plaintext_length,
-                                ciphertext,
-                                ciphertext_size,
-                                ciphertext_length
-            );
-
-            if( status != PSA_ERROR_NOT_SUPPORTED )
-                return( status );
-#endif
 
 
 #endif /* PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT */
@@ -2244,26 +2223,6 @@ static inline psa_status_t psa_driver_wrapper_aead_decrypt(
 
 #if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
 
-#if (defined(FIRMWARE_DRIVER_ENABLED) )
-            status = firmware_transparent_aead_decrypt
-                (attributes,
-                                key_buffer,
-                                key_buffer_size,
-                                alg,
-                                nonce,
-                                nonce_length,
-                                additional_data,
-                                additional_data_length,
-                                ciphertext,
-                                ciphertext_length,
-                                plaintext,
-                                plaintext_size,
-                                plaintext_length
-            );
-
-            if( status != PSA_ERROR_NOT_SUPPORTED )
-                return( status );
-#endif
 
 
 #endif /* PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT */
@@ -2302,6 +2261,7 @@ static inline psa_status_t psa_driver_wrapper_aead_encrypt_setup(
    const uint8_t *key_buffer, size_t key_buffer_size,
    psa_algorithm_t alg )
 {
+
     psa_status_t status = PSA_ERROR_CORRUPTION_DETECTED;
     psa_key_location_t location =
         PSA_KEY_LIFETIME_GET_LOCATION( psa_get_key_lifetime(attributes) );
@@ -2311,8 +2271,25 @@ static inline psa_status_t psa_driver_wrapper_aead_encrypt_setup(
         case PSA_KEY_LOCATION_LOCAL_STORAGE:
             /* Key is stored in the slot in export representation, so
              * cycle through all known transparent accelerators */
-
 #if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
+
+#if (defined(FIRMWARE_DRIVER_ENABLED) )
+            status = firmware_transparent_aead_encrypt_setup
+                (operation,
+                                attributes,
+                                key_buffer,
+                                key_buffer_size,
+                                alg
+            );
+
+            if ( status == PSA_SUCCESS )
+                operation->id = FIRMWARE_TRANSPARENT_DRIVER_ID;
+
+            if( status != PSA_ERROR_NOT_SUPPORTED )
+                return( status );
+#endif
+
+
 #if defined(PSA_CRYPTO_DRIVER_TEST)
             operation->id = MBEDTLS_TEST_TRANSPARENT_DRIVER_ID;
             status = mbedtls_test_transparent_aead_encrypt_setup(
@@ -2356,6 +2333,7 @@ static inline psa_status_t psa_driver_wrapper_aead_decrypt_setup(
    const uint8_t *key_buffer, size_t key_buffer_size,
    psa_algorithm_t alg )
 {
+
     psa_status_t status = PSA_ERROR_CORRUPTION_DETECTED;
     psa_key_location_t location =
         PSA_KEY_LIFETIME_GET_LOCATION( psa_get_key_lifetime(attributes) );
@@ -2365,8 +2343,10 @@ static inline psa_status_t psa_driver_wrapper_aead_decrypt_setup(
         case PSA_KEY_LOCATION_LOCAL_STORAGE:
             /* Key is stored in the slot in export representation, so
              * cycle through all known transparent accelerators */
-
 #if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
+
+
+
 #if defined(PSA_CRYPTO_DRIVER_TEST)
             operation->id = MBEDTLS_TEST_TRANSPARENT_DRIVER_ID;
             status = mbedtls_test_transparent_aead_decrypt_setup(
@@ -2410,6 +2390,7 @@ static inline psa_status_t psa_driver_wrapper_aead_set_nonce(
    const uint8_t *nonce,
    size_t nonce_length )
 {
+
     switch( operation->id )
     {
 #if defined(MBEDTLS_PSA_BUILTIN_AEAD)
@@ -2421,6 +2402,9 @@ static inline psa_status_t psa_driver_wrapper_aead_set_nonce(
 #endif /* MBEDTLS_PSA_BUILTIN_AEAD */
 
 #if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
+
+
+
 #if defined(PSA_CRYPTO_DRIVER_TEST)
         case MBEDTLS_TEST_TRANSPARENT_DRIVER_ID:
             return( mbedtls_test_transparent_aead_set_nonce(
@@ -2515,6 +2499,7 @@ static inline psa_status_t psa_driver_wrapper_aead_update(
    size_t output_size,
    size_t *output_length )
 {
+
     switch( operation->id )
     {
 #if defined(MBEDTLS_PSA_BUILTIN_AEAD)
@@ -2527,6 +2512,9 @@ static inline psa_status_t psa_driver_wrapper_aead_update(
 #endif /* MBEDTLS_PSA_BUILTIN_AEAD */
 
 #if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
+
+
+
 #if defined(PSA_CRYPTO_DRIVER_TEST)
         case MBEDTLS_TEST_TRANSPARENT_DRIVER_ID:
             return( mbedtls_test_transparent_aead_update(
@@ -2558,6 +2546,7 @@ static inline psa_status_t psa_driver_wrapper_aead_finish(
    size_t tag_size,
    size_t *tag_length )
 {
+
     switch( operation->id )
     {
 #if defined(MBEDTLS_PSA_BUILTIN_AEAD)
@@ -2571,6 +2560,9 @@ static inline psa_status_t psa_driver_wrapper_aead_finish(
 #endif /* MBEDTLS_PSA_BUILTIN_AEAD */
 
 #if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
+
+
+
 #if defined(PSA_CRYPTO_DRIVER_TEST)
         case MBEDTLS_TEST_TRANSPARENT_DRIVER_ID:
             return( mbedtls_test_transparent_aead_finish(
@@ -2602,6 +2594,7 @@ static inline psa_status_t psa_driver_wrapper_aead_verify(
    const uint8_t *tag,
    size_t tag_length )
 {
+
     switch( operation->id )
     {
 #if defined(MBEDTLS_PSA_BUILTIN_AEAD)
@@ -2635,6 +2628,9 @@ static inline psa_status_t psa_driver_wrapper_aead_verify(
 #endif /* MBEDTLS_PSA_BUILTIN_AEAD */
 
 #if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
+
+
+
 #if defined(PSA_CRYPTO_DRIVER_TEST)
         case MBEDTLS_TEST_TRANSPARENT_DRIVER_ID:
             return( mbedtls_test_transparent_aead_verify(

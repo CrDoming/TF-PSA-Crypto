@@ -2235,7 +2235,6 @@ ciphertext_length
         case PSA_KEY_LOCATION_LOCAL_STORAGE:
             /* Key is stored in the slot in export representation, so
              * cycle through all known transparent accelerators */
-
 #if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
 {% with nest_indent=12 %}
 {% include "OS-template-transparent.jinja" -%}
@@ -2347,6 +2346,14 @@ static inline psa_status_t psa_driver_wrapper_aead_encrypt_setup(
    const uint8_t *key_buffer, size_t key_buffer_size,
    psa_algorithm_t alg )
 {
+{% with entry_point = "aead_encrypt_setup" -%}
+{% macro entry_point_param(driver) -%}
+operation,
+attributes,
+key_buffer,
+key_buffer_size,
+alg
+{% endmacro %}
     psa_status_t status = PSA_ERROR_CORRUPTION_DETECTED;
     psa_key_location_t location =
         PSA_KEY_LIFETIME_GET_LOCATION( psa_get_key_lifetime(attributes) );
@@ -2356,8 +2363,24 @@ static inline psa_status_t psa_driver_wrapper_aead_encrypt_setup(
         case PSA_KEY_LOCATION_LOCAL_STORAGE:
             /* Key is stored in the slot in export representation, so
              * cycle through all known transparent accelerators */
-
 #if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
+{% with nest_indent=12 %}
+{% for driver in drivers if driver.type == "transparent" -%}
+{% for capability in driver.capabilities if entry_point in capability.entry_points -%}
+#if ({% if capability['mbedtls/c_condition'] is defined -%}{{ capability['mbedtls/c_condition'] }} {% else -%} {{ 1 }} {% endif %})
+{%- filter indent(width = nest_indent) %}
+status = {{ entry_point_name(capability, entry_point, driver) }}({{entry_point_param(driver) | indent(20)}});
+
+if ( status == PSA_SUCCESS )
+    operation->id = {{(driver.prefix + "_" + driver.type + "_driver_id").upper()}};
+
+if( status != PSA_ERROR_NOT_SUPPORTED )
+    return( status );
+{% endfilter -%}
+#endif
+{% endfor %}
+{% endfor %}
+{% endwith -%}
 #if defined(PSA_CRYPTO_DRIVER_TEST)
             operation->id = MBEDTLS_TEST_TRANSPARENT_DRIVER_ID;
             status = mbedtls_test_transparent_aead_encrypt_setup(
@@ -2393,6 +2416,7 @@ static inline psa_status_t psa_driver_wrapper_aead_encrypt_setup(
             (void) alg;
             return( PSA_ERROR_INVALID_ARGUMENT );
     }
+{% endwith -%}
 }
 
 static inline psa_status_t psa_driver_wrapper_aead_decrypt_setup(
@@ -2401,6 +2425,14 @@ static inline psa_status_t psa_driver_wrapper_aead_decrypt_setup(
    const uint8_t *key_buffer, size_t key_buffer_size,
    psa_algorithm_t alg )
 {
+{% with entry_point = "aead_decrypt_setup" -%}
+{% macro entry_point_param(driver) -%}
+operation,
+attributes,
+key_buffer,
+key_buffer_size,
+alg
+{% endmacro %}
     psa_status_t status = PSA_ERROR_CORRUPTION_DETECTED;
     psa_key_location_t location =
         PSA_KEY_LIFETIME_GET_LOCATION( psa_get_key_lifetime(attributes) );
@@ -2410,8 +2442,24 @@ static inline psa_status_t psa_driver_wrapper_aead_decrypt_setup(
         case PSA_KEY_LOCATION_LOCAL_STORAGE:
             /* Key is stored in the slot in export representation, so
              * cycle through all known transparent accelerators */
-
 #if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
+{% with nest_indent=12 %}
+{% for driver in drivers if driver.type == "transparent" -%}
+{% for capability in driver.capabilities if entry_point in capability.entry_points -%}
+#if ({% if capability['mbedtls/c_condition'] is defined -%}{{ capability['mbedtls/c_condition'] }} {% else -%} {{ 1 }} {% endif %})
+{%- filter indent(width = nest_indent) %}
+status = {{ entry_point_name(capability, entry_point, driver) }}({{entry_point_param(driver) | indent(20)}});
+
+if ( status == PSA_SUCCESS )
+    operation->id = {{(driver.prefix + "_" + driver.type + "_driver_id").upper()}};
+
+if( status != PSA_ERROR_NOT_SUPPORTED )
+    return( status );
+{% endfilter -%}
+#endif
+{% endfor %}
+{% endfor %}
+{% endwith -%}
 #if defined(PSA_CRYPTO_DRIVER_TEST)
             operation->id = MBEDTLS_TEST_TRANSPARENT_DRIVER_ID;
             status = mbedtls_test_transparent_aead_decrypt_setup(
@@ -2448,6 +2496,7 @@ static inline psa_status_t psa_driver_wrapper_aead_decrypt_setup(
             (void) alg;
             return( PSA_ERROR_INVALID_ARGUMENT );
     }
+{% endwith -%}
 }
 
 static inline psa_status_t psa_driver_wrapper_aead_set_nonce(
@@ -2455,6 +2504,12 @@ static inline psa_status_t psa_driver_wrapper_aead_set_nonce(
    const uint8_t *nonce,
    size_t nonce_length )
 {
+{% with entry_point = "aead_set_nonce" -%}
+{% macro entry_point_param(driver) -%}
+operation,
+nonce,
+nonce_length
+{% endmacro %}
     switch( operation->id )
     {
 #if defined(MBEDTLS_PSA_BUILTIN_AEAD)
@@ -2466,6 +2521,18 @@ static inline psa_status_t psa_driver_wrapper_aead_set_nonce(
 #endif /* MBEDTLS_PSA_BUILTIN_AEAD */
 
 #if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
+{% with nest_indent=12 %}
+{% for driver in drivers if driver.type == "transparent" -%}
+{% for capability in driver.capabilities if entry_point in capability.entry_points -%}
+#if ({% if capability['mbedtls/c_condition'] is defined -%}{{ capability['mbedtls/c_condition'] }} {% else -%} {{ 1 }} {% endif %})
+{%- filter indent(width = nest_indent) %}
+    case {{(driver.prefix + "_" + driver.type + "_driver_id").upper()}}:
+        return {{ entry_point_name(capability, entry_point, driver) }}({{entry_point_param(driver) | indent(20)}});
+{% endfilter -%}
+#endif
+{% endfor %}
+{% endfor %}
+{% endwith -%}
 #if defined(PSA_CRYPTO_DRIVER_TEST)
         case MBEDTLS_TEST_TRANSPARENT_DRIVER_ID:
             return( mbedtls_test_transparent_aead_set_nonce(
@@ -2482,6 +2549,7 @@ static inline psa_status_t psa_driver_wrapper_aead_set_nonce(
     (void)nonce_length;
 
     return( PSA_ERROR_INVALID_ARGUMENT );
+{% endwith -%}
 }
 
 static inline psa_status_t psa_driver_wrapper_aead_set_lengths(
@@ -2560,6 +2628,15 @@ static inline psa_status_t psa_driver_wrapper_aead_update(
    size_t output_size,
    size_t *output_length )
 {
+{% with entry_point = "aead_update" -%}
+{% macro entry_point_param(driver) -%}
+operation,
+input,
+input_length,
+output,
+output_size,
+output_length
+{% endmacro %}
     switch( operation->id )
     {
 #if defined(MBEDTLS_PSA_BUILTIN_AEAD)
@@ -2572,6 +2649,18 @@ static inline psa_status_t psa_driver_wrapper_aead_update(
 #endif /* MBEDTLS_PSA_BUILTIN_AEAD */
 
 #if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
+{% with nest_indent=12 %}
+{% for driver in drivers if driver.type == "transparent" -%}
+{% for capability in driver.capabilities if entry_point in capability.entry_points -%}
+#if ({% if capability['mbedtls/c_condition'] is defined -%}{{ capability['mbedtls/c_condition'] }} {% else -%} {{ 1 }} {% endif %})
+{%- filter indent(width = nest_indent) %}
+    case {{(driver.prefix + "_" + driver.type + "_driver_id").upper()}}:
+        return {{ entry_point_name(capability, entry_point, driver) }}({{entry_point_param(driver) | indent(20)}});
+{% endfilter -%}
+#endif
+{% endfor %}
+{% endfor %}
+{% endwith -%}
 #if defined(PSA_CRYPTO_DRIVER_TEST)
         case MBEDTLS_TEST_TRANSPARENT_DRIVER_ID:
             return( mbedtls_test_transparent_aead_update(
@@ -2592,6 +2681,7 @@ static inline psa_status_t psa_driver_wrapper_aead_update(
     (void)output_length;
 
     return( PSA_ERROR_INVALID_ARGUMENT );
+{% endwith -%}
 }
 
 static inline psa_status_t psa_driver_wrapper_aead_finish(
@@ -2603,6 +2693,16 @@ static inline psa_status_t psa_driver_wrapper_aead_finish(
    size_t tag_size,
    size_t *tag_length )
 {
+{% with entry_point = "aead_finish" -%}
+{% macro entry_point_param(driver) -%}
+operation,
+ciphertext,
+ciphertext_size,
+ciphertext_length,
+tag,
+tag_size,
+tag_length
+{% endmacro %}
     switch( operation->id )
     {
 #if defined(MBEDTLS_PSA_BUILTIN_AEAD)
@@ -2616,6 +2716,18 @@ static inline psa_status_t psa_driver_wrapper_aead_finish(
 #endif /* MBEDTLS_PSA_BUILTIN_AEAD */
 
 #if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
+{% with nest_indent=12 %}
+{% for driver in drivers if driver.type == "transparent" -%}
+{% for capability in driver.capabilities if entry_point in capability.entry_points -%}
+#if ({% if capability['mbedtls/c_condition'] is defined -%}{{ capability['mbedtls/c_condition'] }} {% else -%} {{ 1 }} {% endif %})
+{%- filter indent(width = nest_indent) %}
+    case {{(driver.prefix + "_" + driver.type + "_driver_id").upper()}}:
+        return {{ entry_point_name(capability, entry_point, driver) }}({{entry_point_param(driver) | indent(20)}});
+{% endfilter -%}
+#endif
+{% endfor %}
+{% endfor %}
+{% endwith -%}
 #if defined(PSA_CRYPTO_DRIVER_TEST)
         case MBEDTLS_TEST_TRANSPARENT_DRIVER_ID:
             return( mbedtls_test_transparent_aead_finish(
@@ -2637,6 +2749,7 @@ static inline psa_status_t psa_driver_wrapper_aead_finish(
     (void)tag_length;
 
     return( PSA_ERROR_INVALID_ARGUMENT );
+{% endwith -%}
 }
 
 static inline psa_status_t psa_driver_wrapper_aead_verify(
@@ -2647,6 +2760,15 @@ static inline psa_status_t psa_driver_wrapper_aead_verify(
    const uint8_t *tag,
    size_t tag_length )
 {
+{% with entry_point = "aead_verify" -%}
+{% macro entry_point_param(driver) -%}
+operation,
+plaintext,
+plaintext_size,
+plaintext_length,
+tag,
+tag_length
+{% endmacro %}
     switch( operation->id )
     {
 #if defined(MBEDTLS_PSA_BUILTIN_AEAD)
@@ -2680,6 +2802,18 @@ static inline psa_status_t psa_driver_wrapper_aead_verify(
 #endif /* MBEDTLS_PSA_BUILTIN_AEAD */
 
 #if defined(PSA_CRYPTO_ACCELERATOR_DRIVER_PRESENT)
+{% with nest_indent=12 %}
+{% for driver in drivers if driver.type == "transparent" -%}
+{% for capability in driver.capabilities if entry_point in capability.entry_points -%}
+#if ({% if capability['mbedtls/c_condition'] is defined -%}{{ capability['mbedtls/c_condition'] }} {% else -%} {{ 1 }} {% endif %})
+{%- filter indent(width = nest_indent) %}
+    case {{(driver.prefix + "_" + driver.type + "_driver_id").upper()}}:
+        return {{ entry_point_name(capability, entry_point, driver) }}({{entry_point_param(driver) | indent(20)}});
+{% endfilter -%}
+#endif
+{% endfor %}
+{% endfor %}
+{% endwith -%}
 #if defined(PSA_CRYPTO_DRIVER_TEST)
         case MBEDTLS_TEST_TRANSPARENT_DRIVER_ID:
             return( mbedtls_test_transparent_aead_verify(
@@ -2700,6 +2834,7 @@ static inline psa_status_t psa_driver_wrapper_aead_verify(
     (void)tag_length;
 
     return( PSA_ERROR_INVALID_ARGUMENT );
+{% endwith -%}
 }
 
 static inline psa_status_t psa_driver_wrapper_aead_abort(
