@@ -13,4 +13,11 @@ EXPORTS
     psa_mac_compute
     psa_aead_encrypt
     psa_aead_decrypt
+    psa_aead_encrypt_setup
+    psa_aead_decrypt_setup
+    psa_aead_set_nonce
+    psa_aead_set_lengths
+    psa_aead_update
+    psa_aead_finish
+    psa_aead_verify
     psa_raw_key_agreement

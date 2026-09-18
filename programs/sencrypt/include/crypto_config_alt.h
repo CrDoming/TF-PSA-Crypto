@@ -2067,6 +2067,17 @@
 
 /** \} name SECTION: Builtin drivers */
 
+/**
+ * \def MBEDTLS_PSA_ACCEL_KEY_TYPE_AES
+ *
+ * If this option is enabled, then AES-CBC can be accelerated by a driver.
+ *
+ * \note Check psa_driver_wrapper_cipher_encrypt.
+ *
+ * \warning This option is not present in the original crypto_config.h.
+ */
+#define MBEDTLS_PSA_ACCEL_KEY_TYPE_AES
+
 /* Do not enable except for testing. Will be removed in a future minor version.
  */
 //#define TF_PSA_CRYPTO_ALLOW_REMOVED_MECHANISMS

@@ -12,11 +12,10 @@
         "generate_key",
         "import_key",
         "export_public_key",
+        "cipher_encrypt",
         "hash_setup",
         "hash_update",
         "hash_finish",
-        "aead_encrypt_setup",
-        "aead_decrypt_setup",
         "key_agreement"
       ],
       "algorithms": [
